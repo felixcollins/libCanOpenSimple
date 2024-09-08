@@ -77,9 +77,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CanOpenPacket.cs" />
     <Compile Include="ConnectionChangedEventArgs.cs" />
+    <Compile Include="DriverInstance.cs" />
     <Compile Include="DriverLoader.cs" />
-    <Compile Include="libCanopenSimple.cs" />
+    <Compile Include="libCanOpenSimple.cs" />
     <Compile Include="NMTState.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SDO.cs" />

@@ -18,7 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace libCanopenSimple
+namespace libCanOpenSimple
 {
     /// <summary>
     /// The SDO class encapusulates an SDO transfer and its associated data
@@ -73,7 +73,7 @@ namespace libCanopenSimple
         private direction dir;
       
         private UInt32 totaldata;
-        private libCanopenSimple can;
+        private libCanOpenSimple can;
         private bool lasttoggle = false;
         private DateTime timeout;
         private ManualResetEvent finishedevent;
@@ -90,7 +90,7 @@ namespace libCanopenSimple
         /// <param name="dir">Direction of transfer</param>
         /// <param name="completedcallback">Optional, completed callback (or null if not required)</param>
         /// <param name="databuffer">A byte array of data to be transfered to or from if more than 4 bytes</param>
-        public SDO(libCanopenSimple can, byte node, UInt16 index, byte subindex, direction dir, Action<SDO> completedcallback, byte[] databuffer)
+        public SDO(libCanOpenSimple can, byte node, UInt16 index, byte subindex, direction dir, Action<SDO> completedcallback, byte[] databuffer)
         {
             this.can = can;
             this.index = index;
@@ -243,7 +243,7 @@ namespace libCanopenSimple
         private void sendpacket(byte cmd, byte[] payload)
         {
 
-            canpacket p = new canpacket();
+            CanOpenPacket p = new CanOpenPacket();
             p.cob = (UInt16)(0x600 + node);
             p.len = 8;
             p.data = new byte[8];
@@ -276,7 +276,7 @@ namespace libCanopenSimple
         /// <param name="payload">Data payload</param>
         private void sendpacketsegment(byte cmd, byte[] payload)
         {
-            canpacket p = new canpacket();
+            CanOpenPacket p = new CanOpenPacket();
             p.cob = (UInt16)(0x600 + node);
             p.len = 8;
             p.data = new byte[8];
@@ -307,7 +307,7 @@ namespace libCanopenSimple
         /// </summary>
         /// <param name="cp">SDO Canpacket to process</param>
         /// <returns></returns>
-        public bool SDOProcess(canpacket cp)
+        public bool SDOProcess(CanOpenPacket cp)
         {
 
             int SCS = cp.data[0] >> 5; //7-5

@@ -16,7 +16,7 @@
 
 using System;
 
-namespace libCanopenSimple
+namespace libCanOpenSimple
 {
     public class NMTState
     {

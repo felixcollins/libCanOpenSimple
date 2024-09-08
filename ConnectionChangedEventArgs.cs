@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace libCanopenSimple
+namespace libCanOpenSimple
 {
     public class ConnectionChangedEventArgs : EventArgs
     {
