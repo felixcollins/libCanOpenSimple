@@ -40,7 +40,7 @@ namespace libCanOpenSimple
         /// </summary>
         /// <param name="fileName"> Name of the dynamic library to load, note do not append .dll or .so</param>
         /// <returns></returns>
-        public DriverInstance loaddriver(string fileName)
+        public DriverInstanceCanFestival loaddriver(string fileName)
         {
           
 
@@ -82,7 +82,7 @@ namespace libCanOpenSimple
 
         private IntPtr Handle = IntPtr.Zero;
 
-        DriverInstance driver;
+        DriverInstanceCanFestival driver;
 
         /// <summary>
         /// Clean up and free the library
@@ -101,7 +101,7 @@ namespace libCanOpenSimple
         /// </summary>
         /// <param name="fileName">Load can festival driver (Windows .Net runtime version) .dll must be appeneded in this case to fileName</param>
         /// <returns></returns>
-        public DriverInstance loaddriver(string fileName)
+        public DriverInstanceCanFestival loaddriver(string fileName)
         {
 
             IntPtr Handle = LoadLibrary(fileName);
@@ -115,24 +115,24 @@ namespace libCanOpenSimple
             IntPtr funcaddr;
 
             funcaddr = GetProcAddress(Handle, "canReceive_driver");
-            DriverInstance.canReceive_T canReceive = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstance.canReceive_T)) as DriverInstance.canReceive_T;
+            DriverInstanceCanFestival.canReceive_T canReceive = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canReceive_T)) as DriverInstanceCanFestival.canReceive_T;
 
             funcaddr = GetProcAddress(Handle, "canSend_driver");
-            DriverInstance.canSend_T canSend = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstance.canSend_T)) as DriverInstance.canSend_T; ;
+            DriverInstanceCanFestival.canSend_T canSend = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canSend_T)) as DriverInstanceCanFestival.canSend_T; ;
 
             funcaddr = GetProcAddress(Handle, "canOpen_driver");
-            DriverInstance.canOpen_T canOpen = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstance.canOpen_T)) as DriverInstance.canOpen_T; ;
+            DriverInstanceCanFestival.canOpen_T canOpen = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canOpen_T)) as DriverInstanceCanFestival.canOpen_T; ;
 
             funcaddr = GetProcAddress(Handle, "canClose_driver");
-            DriverInstance.canClose_T canClose = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstance.canClose_T)) as DriverInstance.canClose_T; ;
+            DriverInstanceCanFestival.canClose_T canClose = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canClose_T)) as DriverInstanceCanFestival.canClose_T; ;
 
             funcaddr = GetProcAddress(Handle, "canChangeBaudRate_driver");
-            DriverInstance.canChangeBaudRate_T canChangeBaudRate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstance.canChangeBaudRate_T)) as DriverInstance.canChangeBaudRate_T; ;
+            DriverInstanceCanFestival.canChangeBaudRate_T canChangeBaudRate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canChangeBaudRate_T)) as DriverInstanceCanFestival.canChangeBaudRate_T; ;
 
             funcaddr = GetProcAddress(Handle, "canEnumerate2_driver");
-            DriverInstance.canEnumerate_T canEnumerate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstance.canEnumerate_T)) as DriverInstance.canEnumerate_T; ;
+            DriverInstanceCanFestival.canEnumerate_T canEnumerate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canEnumerate_T)) as DriverInstanceCanFestival.canEnumerate_T; ;
 
-            driver = new DriverInstance(canReceive, canSend, canOpen, canClose, canChangeBaudRate,canEnumerate);
+            driver = new DriverInstanceCanFestival(canReceive, canSend, canOpen, canClose, canChangeBaudRate,canEnumerate);
 
             return driver;
         }
@@ -157,7 +157,7 @@ namespace libCanOpenSimple
         [DllImport("libdl.so")]
         protected static extern IntPtr dlsym(IntPtr handle, string symbol);
 
-        DriverInstance driver;
+        DriverInstanceCanFestival driver;
 
         const int RTLD_NOW = 2; // for dlopen's flags 
 
@@ -166,7 +166,7 @@ namespace libCanOpenSimple
         /// </summary>
         /// <param name="fileName">Load can festival driver (Mono runtime version) .so must be appeneded in this case to fileName</param>
         /// <returns></returns>
-        public DriverInstance loaddriver(string fileName)
+        public DriverInstanceCanFestival loaddriver(string fileName)
         {
             IntPtr Handle = dlopen(fileName, RTLD_NOW);
             if (Handle == IntPtr.Zero)
@@ -178,24 +178,24 @@ namespace libCanOpenSimple
             IntPtr funcaddr;
 
             funcaddr = dlsym(Handle, "canReceive_driver");
-            DriverInstance.canReceive_T canReceive = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstance.canReceive_T)) as DriverInstance.canReceive_T;
+            DriverInstanceCanFestival.canReceive_T canReceive = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canReceive_T)) as DriverInstanceCanFestival.canReceive_T;
 
             funcaddr = dlsym(Handle, "canSend_driver");
-            DriverInstance.canSend_T canSend = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstance.canSend_T)) as DriverInstance.canSend_T; ;
+            DriverInstanceCanFestival.canSend_T canSend = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canSend_T)) as DriverInstanceCanFestival.canSend_T; ;
 
             funcaddr = dlsym(Handle, "canOpen_driver");
-            DriverInstance.canOpen_T canOpen = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstance.canOpen_T)) as DriverInstance.canOpen_T; ;
+            DriverInstanceCanFestival.canOpen_T canOpen = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canOpen_T)) as DriverInstanceCanFestival.canOpen_T; ;
 
             funcaddr = dlsym(Handle, "canClose_driver");
-            DriverInstance.canClose_T canClose = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstance.canClose_T)) as DriverInstance.canClose_T; ;
+            DriverInstanceCanFestival.canClose_T canClose = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canClose_T)) as DriverInstanceCanFestival.canClose_T; ;
 
             funcaddr = dlsym(Handle, "canChangeBaudRate_driver");
-            DriverInstance.canChangeBaudRate_T canChangeBaudRate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstance.canChangeBaudRate_T)) as DriverInstance.canChangeBaudRate_T; ;
+            DriverInstanceCanFestival.canChangeBaudRate_T canChangeBaudRate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canChangeBaudRate_T)) as DriverInstanceCanFestival.canChangeBaudRate_T; ;
 
             funcaddr = dlsym(Handle, "canEnumerate_driver");
-            DriverInstance.canEnumerate_T canEnumerate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstance.canEnumerate_T)) as DriverInstance.canEnumerate_T; ;
+            DriverInstanceCanFestival.canEnumerate_T canEnumerate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canEnumerate_T)) as DriverInstanceCanFestival.canEnumerate_T; ;
 
-            driver = new DriverInstance(canReceive, canSend, canOpen, canClose, canChangeBaudRate,canEnumerate);
+            driver = new DriverInstanceCanFestival(canReceive, canSend, canOpen, canClose, canChangeBaudRate,canEnumerate);
 
 
 

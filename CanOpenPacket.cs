@@ -37,7 +37,7 @@ namespace libCanOpenSimple
         /// Construct C# Canpacket from a CanFestival message
         /// </summary>
         /// <param name="msg">A CanFestival message struct</param>
-        public CanOpenPacket(DriverInstance.Message msg,bool bridge=false)
+        public CanOpenPacket(DriverInstanceCanFestival.Message msg,bool bridge=false)
         {
             cob = msg.cob_id;
             len = msg.len;
@@ -52,9 +52,9 @@ namespace libCanOpenSimple
         /// Convert to a CanFestival message
         /// </summary>
         /// <returns>CanFestival message</returns>
-        public DriverInstance.Message ToMsg()
+        public DriverInstanceCanFestival.Message ToMsg()
         {
-            DriverInstance.Message msg = new DriverInstance.Message();
+            DriverInstanceCanFestival.Message msg = new DriverInstanceCanFestival.Message();
             msg.cob_id = cob;
             msg.len = len;
             msg.rtr = 0;

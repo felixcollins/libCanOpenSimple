@@ -54,7 +54,7 @@ namespace libCanOpenSimple
       
         public debuglevel dbglevel = debuglevel.DEBUG_NONE;
        
-        DriverInstance driver;
+        DriverInstanceCanFestival driver;
 
         Dictionary<UInt16, NMTState> nmtstate = new Dictionary<ushort, NMTState>();
 
@@ -104,7 +104,7 @@ namespace libCanOpenSimple
         }
 
         public Dictionary<string, List<string>> ports = new Dictionary<string, List<string>>();
-        public Dictionary<string, DriverInstance> drivers = new Dictionary<string, DriverInstance>();
+        public Dictionary<string, DriverInstanceCanFestival> drivers = new Dictionary<string, DriverInstanceCanFestival>();
 
         public void enumerate(string drivername)
         {
@@ -121,10 +121,10 @@ namespace libCanOpenSimple
                 drivers.Add(drivername, driver);
             }
 
-            DriverInstance di = drivers[drivername];
+            DriverInstanceCanFestival di = drivers[drivername];
             
             di.enumerate();
-            ports[drivername] = DriverInstance.ports;
+            ports[drivername] = DriverInstanceCanFestival.ports;
 
         }
 
@@ -146,7 +146,7 @@ namespace libCanOpenSimple
         /// <param name="p"></param>
         public void SendPacket(CanOpenPacket p, bool bridge=false)
         {
-            DriverInstance.Message msg = p.ToMsg();
+            DriverInstanceCanFestival.Message msg = p.ToMsg();
 
             driver.cansend(msg);
 
@@ -160,7 +160,7 @@ namespace libCanOpenSimple
         /// Recieved message callback handler
         /// </summary>
         /// <param name="msg">CanOpen message recieved from the bus</param>
-        private void Driver_rxmessage(DriverInstance.Message msg,bool bridge=false)
+        private void Driver_rxmessage(DriverInstanceCanFestival.Message msg,bool bridge=false)
         {
             packetqueue.Enqueue(new CanOpenPacket(msg,bridge));
         }
