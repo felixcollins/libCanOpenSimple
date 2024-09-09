@@ -15,23 +15,22 @@
 */
 
 
+using System;
+using System.Runtime.InteropServices;
+
 namespace libCanOpenSimple
 {
-	public interface IDriverInstance
+	/// <summary>
+	/// CanFestival message packet. Note we set data to be a UInt64 as inside canfestival its a fixed char[8] array
+	/// we cannout use fixed arrays in C# without UNSAFE so instead we just use a UInt64
+	/// </summary>
+	[StructLayout(LayoutKind.Sequential, Size = 12, Pack = 1)]
+	public struct Message
 	{
-		/// <summary>
-		/// CANOpen message recieved callback, this will be fired upon any recieved complete message on the bus
-		/// </summary>
-		/// <param name="msg">The CanOpen message</param>
-		public delegate void RxMessage(Message msg, bool bridge = false);
-
-		event RxMessage rxmessage;
-
-		Message canreceive();
-		void cansend(Message msg);
-		void close();
-		void enumerate();
-		bool isOpen();
-		bool open(string bus, BUSSPEED speed);
+		public UInt16 cob_source_id; /**< message's ID */
+		public UInt16 cob_id; /**< message's ID */
+		public byte rtr;       /**< remote transmission request. (0 if not rtr message, 1 if rtr message) */
+		public byte len;       /**< message's length (0 to 8) */
+		public UInt64 data;
 	}
 }

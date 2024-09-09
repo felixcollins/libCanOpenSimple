@@ -146,7 +146,7 @@ namespace libCanOpenSimple
         /// <param name="p"></param>
         public void SendPacket(CanOpenPacket p, bool bridge=false)
         {
-            DriverInstanceCanFestival.Message msg = p.ToMsg();
+            Message msg = p.ToMsg();
 
             driver.cansend(msg);
 
@@ -160,7 +160,7 @@ namespace libCanOpenSimple
         /// Recieved message callback handler
         /// </summary>
         /// <param name="msg">CanOpen message recieved from the bus</param>
-        private void Driver_rxmessage(DriverInstanceCanFestival.Message msg,bool bridge=false)
+        private void Driver_rxmessage(Message msg,bool bridge=false)
         {
             packetqueue.Enqueue(new CanOpenPacket(msg,bridge));
         }

@@ -21,6 +21,8 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
+using static libCanOpenSimple.IDriverInstance;
+
 namespace libCanOpenSimple
 {
 	/// <summary>
@@ -34,26 +36,7 @@ namespace libCanOpenSimple
 		private bool threadrun = true;
 		System.Threading.Thread rxthread;
 
-		/// <summary>
-		/// CANOpen message recieved callback, this will be fired upon any recieved complete message on the bus
-		/// </summary>
-		/// <param name="msg">The CanOpen message</param>
-		public delegate void RxMessage(Message msg, bool bridge = false);
 		public event RxMessage rxmessage;
-
-		/// <summary>
-		/// CanFestival message packet. Note we set data to be a UInt64 as inside canfestival its a fixed char[8] array
-		/// we cannout use fixed arrays in C# without UNSAFE so instead we just use a UInt64
-		/// </summary>
-		[StructLayout(LayoutKind.Sequential, Size = 12, Pack = 1)]
-		public struct Message
-		{
-			public UInt16 cob_source_id; /**< message's ID */
-			public UInt16 cob_id; /**< message's ID */
-			public byte rtr;       /**< remote transmission request. (0 if not rtr message, 1 if rtr message) */
-			public byte len;       /**< message's length (0 to 8) */
-			public UInt64 data;
-		}
 
 		/// <summary>
 		/// This contains the bus name on which the can board is connected and the bit rate of the board
@@ -311,7 +294,7 @@ namespace libCanOpenSimple
 			IntPtr msgptr = Marshal.AllocHGlobal(Marshal.SizeOf(msg));
 			Marshal.StructureToPtr(msg, msgptr, false);
 
-			if (instancehandle != null)
+			if (instancehandle != IntPtr.Zero)
 				canSend(instancehandle, msgptr);
 
 			Marshal.FreeHGlobal(msgptr);
@@ -328,7 +311,7 @@ namespace libCanOpenSimple
 				while (threadrun)
 				{
 
-					DriverInstanceCanFestival.Message rxmsg = canreceive();
+					Message rxmsg = canreceive();
 
 					if (rxmsg.len != 0)
 					{

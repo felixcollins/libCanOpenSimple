@@ -1,4 +1,3 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.35026.282
@@ -20,6 +19,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "can_null_win32", "canfestiv
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug SocketCAN|Any CPU = Debug SocketCAN|Any CPU
+		Debug SocketCAN|x86 = Debug SocketCAN|x86
 		Debug UNICODE|Any CPU = Debug UNICODE|Any CPU
 		Debug UNICODE|x86 = Debug UNICODE|x86
 		Debug|Any CPU = Debug|Any CPU
@@ -30,6 +31,10 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2FB81ADD-258F-4135-A9B9-17E2ACA2448E}.Debug SocketCAN|Any CPU.ActiveCfg = Debug SocketCAN|Any CPU
+		{2FB81ADD-258F-4135-A9B9-17E2ACA2448E}.Debug SocketCAN|Any CPU.Build.0 = Debug SocketCAN|Any CPU
+		{2FB81ADD-258F-4135-A9B9-17E2ACA2448E}.Debug SocketCAN|x86.ActiveCfg = Debug SocketCAN|Any CPU
+		{2FB81ADD-258F-4135-A9B9-17E2ACA2448E}.Debug SocketCAN|x86.Build.0 = Debug SocketCAN|Any CPU
 		{2FB81ADD-258F-4135-A9B9-17E2ACA2448E}.Debug UNICODE|Any CPU.ActiveCfg = Debug|Any CPU
 		{2FB81ADD-258F-4135-A9B9-17E2ACA2448E}.Debug UNICODE|Any CPU.Build.0 = Debug|Any CPU
 		{2FB81ADD-258F-4135-A9B9-17E2ACA2448E}.Debug UNICODE|x86.ActiveCfg = Debug|Any CPU
@@ -46,6 +51,9 @@ Global
 		{2FB81ADD-258F-4135-A9B9-17E2ACA2448E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2FB81ADD-258F-4135-A9B9-17E2ACA2448E}.Release|x86.ActiveCfg = Release|Any CPU
 		{2FB81ADD-258F-4135-A9B9-17E2ACA2448E}.Release|x86.Build.0 = Release|Any CPU
+		{8B5C2DDC-C5EC-4776-8EEE-CAC2365987B8}.Debug SocketCAN|Any CPU.ActiveCfg = Debug SocketCAN|x64
+		{8B5C2DDC-C5EC-4776-8EEE-CAC2365987B8}.Debug SocketCAN|x86.ActiveCfg = Debug SocketCAN|Win32
+		{8B5C2DDC-C5EC-4776-8EEE-CAC2365987B8}.Debug SocketCAN|x86.Build.0 = Debug SocketCAN|Win32
 		{8B5C2DDC-C5EC-4776-8EEE-CAC2365987B8}.Debug UNICODE|Any CPU.ActiveCfg = Release|Win32
 		{8B5C2DDC-C5EC-4776-8EEE-CAC2365987B8}.Debug UNICODE|Any CPU.Build.0 = Release|Win32
 		{8B5C2DDC-C5EC-4776-8EEE-CAC2365987B8}.Debug UNICODE|x86.ActiveCfg = Debug|Win32
@@ -62,6 +70,9 @@ Global
 		{8B5C2DDC-C5EC-4776-8EEE-CAC2365987B8}.Release|Any CPU.Build.0 = Release|Win32
 		{8B5C2DDC-C5EC-4776-8EEE-CAC2365987B8}.Release|x86.ActiveCfg = Release|Win32
 		{8B5C2DDC-C5EC-4776-8EEE-CAC2365987B8}.Release|x86.Build.0 = Release|Win32
+		{16C74D91-F858-4A70-9641-9228D80A24C0}.Debug SocketCAN|Any CPU.ActiveCfg = Debug SocketCAN|x64
+		{16C74D91-F858-4A70-9641-9228D80A24C0}.Debug SocketCAN|x86.ActiveCfg = Debug SocketCAN|Win32
+		{16C74D91-F858-4A70-9641-9228D80A24C0}.Debug SocketCAN|x86.Build.0 = Debug SocketCAN|Win32
 		{16C74D91-F858-4A70-9641-9228D80A24C0}.Debug UNICODE|Any CPU.ActiveCfg = Release|Win32
 		{16C74D91-F858-4A70-9641-9228D80A24C0}.Debug UNICODE|Any CPU.Build.0 = Release|Win32
 		{16C74D91-F858-4A70-9641-9228D80A24C0}.Debug UNICODE|x86.ActiveCfg = Debug|Win32
@@ -78,6 +89,9 @@ Global
 		{16C74D91-F858-4A70-9641-9228D80A24C0}.Release|Any CPU.Build.0 = Release|Win32
 		{16C74D91-F858-4A70-9641-9228D80A24C0}.Release|x86.ActiveCfg = Release|Win32
 		{16C74D91-F858-4A70-9641-9228D80A24C0}.Release|x86.Build.0 = Release|Win32
+		{D8A23079-A479-4E0E-9777-32EEF436549D}.Debug SocketCAN|Any CPU.ActiveCfg = Debug SocketCAN|Win32
+		{D8A23079-A479-4E0E-9777-32EEF436549D}.Debug SocketCAN|x86.ActiveCfg = Debug SocketCAN|Win32
+		{D8A23079-A479-4E0E-9777-32EEF436549D}.Debug SocketCAN|x86.Build.0 = Debug SocketCAN|Win32
 		{D8A23079-A479-4E0E-9777-32EEF436549D}.Debug UNICODE|Any CPU.ActiveCfg = Release|Win32
 		{D8A23079-A479-4E0E-9777-32EEF436549D}.Debug UNICODE|Any CPU.Build.0 = Release|Win32
 		{D8A23079-A479-4E0E-9777-32EEF436549D}.Debug UNICODE|x86.ActiveCfg = Debug|Win32
