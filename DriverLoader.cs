@@ -40,7 +40,7 @@ namespace libCanOpenSimple
         /// </summary>
         /// <param name="fileName"> Name of the dynamic library to load, note do not append .dll or .so</param>
         /// <returns></returns>
-        public DriverInstanceCanFestival loaddriver(string fileName)
+        public IDriverInstance loaddriver(string fileName)
         {
           
 
@@ -50,7 +50,11 @@ namespace libCanOpenSimple
                 DriverLoaderMono dl = new DriverLoaderMono();
                 return dl.loaddriver(fileName);
             }
-            else
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+			{
+				return new DriverInstanceSocketCan();
+			}
+			else
             {
               
                 fileName += ".dll";

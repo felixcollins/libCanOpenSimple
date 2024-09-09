@@ -54,7 +54,7 @@ namespace libCanOpenSimple
       
         public debuglevel dbglevel = debuglevel.DEBUG_NONE;
        
-        DriverInstanceCanFestival driver;
+        IDriverInstance driver;
 
         Dictionary<UInt16, NMTState> nmtstate = new Dictionary<ushort, NMTState>();
 
@@ -104,7 +104,7 @@ namespace libCanOpenSimple
         }
 
         public Dictionary<string, List<string>> ports = new Dictionary<string, List<string>>();
-        public Dictionary<string, DriverInstanceCanFestival> drivers = new Dictionary<string, DriverInstanceCanFestival>();
+        public Dictionary<string, IDriverInstance> drivers = new Dictionary<string, IDriverInstance>();
 
         public void enumerate(string drivername)
         {
@@ -121,7 +121,7 @@ namespace libCanOpenSimple
                 drivers.Add(drivername, driver);
             }
 
-            DriverInstanceCanFestival di = drivers[drivername];
+            IDriverInstance di = drivers[drivername];
             
             di.enumerate();
             ports[drivername] = DriverInstanceCanFestival.ports;
