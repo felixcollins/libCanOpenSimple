@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;DebugSocketCAN</Configurations>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <Target Name="CustomActionsAfterPublish" AfterTargets="Publish">
+    <PropertyGroup>
+      <PowerShellExe Condition=" '$(PowerShellExe)'=='' ">
+        %WINDIR%\System32\WindowsPowerShell\v1.0\powershell.exe
+      </PowerShellExe>
+    </PropertyGroup>
+    <Message Text="Copy to sampextx2" Importance="high" />
+    <Exec Command="$(PowerShellExe) scp -r bin\$(ConfigurationName)\net8.0\publish\linux-arm64\* tx2@sampextx2:~/$(ProjectName)/" />
+  </Target>
+
+  <ItemGroup>
+    <ProjectReference Include="..\libCanOpenSimple.csproj">
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+</Project>
