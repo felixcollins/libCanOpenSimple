@@ -73,7 +73,7 @@ namespace libCanOpenSimple
         private direction dir;
       
         private UInt32 totaldata;
-        private libCanOpenSimple can;
+        private CanOpenSimpleMaster can;
         private bool lasttoggle = false;
         private DateTime timeout;
         private ManualResetEvent finishedevent;
@@ -90,7 +90,7 @@ namespace libCanOpenSimple
         /// <param name="dir">Direction of transfer</param>
         /// <param name="completedcallback">Optional, completed callback (or null if not required)</param>
         /// <param name="databuffer">A byte array of data to be transfered to or from if more than 4 bytes</param>
-        public SDO(libCanOpenSimple can, byte node, UInt16 index, byte subindex, direction dir, Action<SDO> completedcallback, byte[] databuffer)
+        public SDO(CanOpenSimpleMaster can, byte node, UInt16 index, byte subindex, direction dir, Action<SDO> completedcallback, byte[] databuffer)
         {
             this.can = can;
             this.index = index;

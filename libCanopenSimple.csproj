@@ -3,13 +3,14 @@
     <TargetFramework>net8.0</TargetFramework>
     <OutputType>Library</OutputType>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <Configurations>Debug;Release;Debug SocketCAN</Configurations>
+    <Configurations>Debug;Release;DebugSocketCAN</Configurations>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
-    <OutputPath>bin\x86\Debug\</OutputPath>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugSocketCAN|AnyCPU'">
+    <OutputPath>bin\DebugSocketCAN\</OutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug SocketCAN|x86'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <OutputPath>bin\x86\Debug\</OutputPath>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
@@ -21,27 +22,34 @@
     <OutputPath>bin\x64\Debug\</OutputPath>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug SocketCAN|x64'">
-    <OutputPath>bin\x64\Debug\</OutputPath>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>bin\x64\Release\</OutputPath>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+    <Compile Remove="canfestivaldrivers\**" />
+    <Compile Remove="DriverTest\**" />
+    <Compile Remove="libCanOpenSimpleCLI\**" />
+    <Compile Remove="SimpleTest\**" />
+    <EmbeddedResource Remove="canfestivaldrivers\**" />
+    <EmbeddedResource Remove="DriverTest\**" />
+    <EmbeddedResource Remove="libCanOpenSimpleCLI\**" />
+    <EmbeddedResource Remove="SimpleTest\**" />
+    <None Remove="canfestivaldrivers\**" />
+    <None Remove="DriverTest\**" />
+    <None Remove="libCanOpenSimpleCLI\**" />
+    <None Remove="SimpleTest\**" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="DriverTest\DriverTest.cs" />
-    <Compile Remove="DriverTest\obj\Debug\.NETFramework,Version=v4.5.2.AssemblyAttributes.cs" />
-    <Compile Remove="DriverTest\obj\Release\.NETFramework,Version=v4.5.2.AssemblyAttributes.cs" />
-    <Compile Remove="DriverTest\Properties\AssemblyInfo.cs" />
-    <Compile Remove="SimpleTest\obj\Debug\.NETFramework,Version=v4.5.2.AssemblyAttributes.cs" />
-    <Compile Remove="SimpleTest\obj\Release\.NETFramework,Version=v4.5.2.AssemblyAttributes.cs" />
-    <Compile Remove="SimpleTest\Properties\AssemblyInfo.cs" />
-    <Compile Remove="SimpleTest\SimpleTest.cs" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="SocketCANSharp">
+      <HintPath>..\SocketCANSharp\src\SocketCANSharp\bin\Release\net8.0\SocketCANSharp.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <PropertyGroup />
   <PropertyGroup />

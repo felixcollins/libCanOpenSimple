@@ -48,7 +48,7 @@ namespace libCanOpenSimple
     /// It is not a CanDevice and does not respond to any message (other than the required SDO client handshakes) and it does not
     /// contain an object dictionary
     /// </summary>
-    public class libCanOpenSimple
+    public class CanOpenSimpleMaster
     {
 
       
@@ -64,7 +64,7 @@ namespace libCanOpenSimple
 
         public bool echo = true;
 
-        public libCanOpenSimple()
+        public CanOpenSimpleMaster()
         {
             //preallocate all NMT guards
             for (byte x = 0; x < 0x80; x++)
@@ -626,17 +626,6 @@ namespace libCanOpenSimple
             return nmtstate[node].state != NMTState.e_NMTState.INVALID;
         }
 
-        public void NMT_ReseCommunication(byte nodeid = 0)
-        {
-            CanOpenPacket p = new CanOpenPacket();
-            p.cob = 000;
-            p.len = 2;
-            p.data = new byte[2];
-            p.data[0] = 0x81;
-            p.data[1] = nodeid;
-
-            SendPacket(p);
-        }
 
         public bool checkguard(int node, TimeSpan maxspan)
         {
