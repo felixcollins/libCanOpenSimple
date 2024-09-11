@@ -1,5 +1,8 @@
+
+
 # libCanOpenSimple
-Forked with the purposes of porting to use SocketCanSharp with SocketCan on Linux
+September 2024 Forked by Felix with the purposes of porting to use SocketCanSharp with SocketCan on Linux
+This is a driver that does not match the can festival interface. With the introduction of an interface a driver now just needs to implement IDriverInstance
 
 libCanOpenSimple is a "simple" CanOpen library for C# that uses native dll/so drivers from CanFestival/SocketCan to access CAN hardware. The library provides callbacks for the defined COB types NMT/PDO/SDO etc as well as allowing arbatary injection of CANOpen packets.
 The API also provides some common functions such as NMT controls for start/stop/reset and full SDO client behaviour so that remote nodes object dictionaries can be read/written via SDO using the library. The SDO supports expidited/segmented and block transfers.
@@ -10,16 +13,17 @@ The API also provides some common functions such as NMT controls for start/stop/
  - There is no SDO server support
  - There are no other features that you would expect in a can open device
  
-Despite the above it would technicaly be possible to add all of the above features using the callbacks add API but this is outside the scope of this project as there are perfectly good opensource CanOpenStacks already out there so creating another is not helpful.
+Despite the above it would technically be possible to add all of the above features using the callbacks add API but this is outside the scope of this project as there are perfectly good opensource CanOpenStacks already out there so creating another is not helpful.
 
 ### Drivers
 
 libCanopenSimple uses the C API drivers from CanFestival. Can Festival is included as a git submodule in the project and the top level solution includes the C# libcanopensimple code and the canfestival drivers.
-Only 4 drivers are enabled these are
+Drivers enabled are:
  - can_canusb_win32
  - can_canusb_d2xx
  - can_nanomsg_win32
  - can_null_win32
+ - SocketCan on linux via SocketCanSharp interop wrapper
 
  canusb_win32 will enumerate any COM port and offer it as COMx, the protocol is CANTIN which is used by a number of devices including the ones from https://www.can232.com/?page_id=16
  canusb_d2xx will enumerate any FTDI USB serial device using the ftdi d2xx driver. This means you don't need to enable legacy com port support for the ftdi device
@@ -27,6 +31,8 @@ Only 4 drivers are enabled these are
  null_win32 is a driver template that has no functionaility other than it enumerates and stubs out the required functions.
  
 ### Create your own driver
+Implement IDriverInstance or load a CanFestival complient driver
+
 All drivers must confirm to the CanFestival driver API that is it must export the following symbols
    - canReceive_driver
    - canSend_driver
