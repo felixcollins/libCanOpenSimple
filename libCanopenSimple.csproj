@@ -31,14 +31,17 @@
     <Compile Remove="DriverTest\**" />
     <Compile Remove="libCanOpenSimpleCLI\**" />
     <Compile Remove="SimpleTest\**" />
+    <Compile Remove="SocketCANSharp\**" />
     <EmbeddedResource Remove="canfestivaldrivers\**" />
     <EmbeddedResource Remove="DriverTest\**" />
     <EmbeddedResource Remove="libCanOpenSimpleCLI\**" />
     <EmbeddedResource Remove="SimpleTest\**" />
+    <EmbeddedResource Remove="SocketCANSharp\**" />
     <None Remove="canfestivaldrivers\**" />
     <None Remove="DriverTest\**" />
     <None Remove="libCanOpenSimpleCLI\**" />
     <None Remove="SimpleTest\**" />
+    <None Remove="SocketCANSharp\**" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
@@ -47,9 +50,7 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="SocketCANSharp">
-      <HintPath>..\SocketCANSharp\src\SocketCANSharp\bin\Release\net8.0\SocketCANSharp.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="SocketCANSharp\src\SocketCANSharp\SocketCANSharp.csproj" />
   </ItemGroup>
   <PropertyGroup />
   <PropertyGroup />
