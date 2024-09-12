@@ -32,6 +32,13 @@ namespace libCanOpenSimple
 		void close();
 		void enumerate();
 		bool isOpen();
+
+		/// <summary>
+		/// Open a connection to a particular CAN bus
+		/// </summary>
+		/// <param name="bus">Something like can0 or vcan0 on linux</param>
+		/// <param name="speed">Note that speed is preconfigured for SocketCan and can not be changed - this parameter is ignored</param>
+		/// <returns></returns>
 		bool open(string bus, BUSSPEED speed);
 	}
 }

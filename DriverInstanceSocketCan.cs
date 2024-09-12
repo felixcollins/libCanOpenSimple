@@ -31,7 +31,7 @@ namespace libCanOpenSimple
 			msg.data = BitConverter.ToUInt64(frm.Data);
 			msg.len = frm.Length;
 			if (bytesRead == -1)
-				Console.WriteLine("Reading fromCAN Socket failed");
+				throw new Exception("Reading from SocketCan failed");
 			return msg;
 		}
 
@@ -43,7 +43,7 @@ namespace libCanOpenSimple
 			frm.Length = msg.len;
 			int bytesWritten = socket.Write(frm);
 			if (bytesWritten == -1)
-				Console.WriteLine("Writing to CAN Socket failed");
+				throw new Exception("Writing to SocketCan failed");
 		}
 
 		public void close()
@@ -68,24 +68,21 @@ namespace libCanOpenSimple
 			socket = new RawCanSocket();
 			if (socket.SafeHandle.IsInvalid)
 			{
-				Console.WriteLine("Failed to create socket.");
-				return false;
+				throw new Exception("Failed to create socket.");
 			}
 
 			var ifr = new Ifreq(bus);
 			int ioctlResult = LibcNativeMethods.Ioctl(socket.SafeHandle, SocketCanConstants.SIOCGIFINDEX, ifr);
 			if (ioctlResult == -1)
 			{
-				Console.WriteLine($"Failed to look up {bus} interface by name.");
-				return false;
+				throw new Exception($"Failed to look up {bus} interface by name.");
 			}
 
 			var addr = new SockAddrCan(ifr.IfIndex);
 			socket.Bind(addr);
 			if(!socket.IsBound)
 			{
-				Console.WriteLine("Failed to bind to address.");
-				return false;
+				throw new Exception("Failed to bind to address.");
 			}
 
 
@@ -100,25 +97,17 @@ namespace libCanOpenSimple
 		/// </summary>
 		private void rxthreadworker()
 		{
-			try
+			while (threadrun)
 			{
-				while (threadrun)
+
+				Message rxmsg = canreceive();
+
+				if (rxmsg.len != 0)
 				{
-
-					Message rxmsg = canreceive();
-
-					if (rxmsg.len != 0)
-					{
-						if (rxmessage != null)
-							rxmessage(rxmsg);
-					}
+					if (rxmessage != null)
+						rxmessage(rxmsg);
 				}
 			}
-			catch (Exception ex) 
-			{
-				Console.WriteLine($"Exception thrown in rx thread worker {ex}");
-			}
 		}
-
 	}
 }

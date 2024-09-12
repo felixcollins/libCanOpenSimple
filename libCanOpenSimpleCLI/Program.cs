@@ -16,7 +16,7 @@ namespace libCanOpenSimpleCLI
 
 			var canopen = new CanOpenSimpleMaster();
 
-			canopen.open(args[0], BUSSPEED.BUS_500Kbit, "");
+			canopen.open(args[0], BUSSPEED.BUS_500Kbit, "SocketCan");
 
 			canopen.emcyevent += (packet, time) =>
 			{

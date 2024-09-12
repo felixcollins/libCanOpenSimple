@@ -167,7 +167,7 @@ namespace libCanOpenSimple
             {
                 state = SDO_STATE.SDO_ERROR;
 
-                Console.WriteLine("SDO Timeout Error on {0:x4}/{1:x2} {2:x8}", this.index, this.subindex, expitideddata);
+                //Console.WriteLine("SDO Timeout Error on {0:x4}/{1:x2} {2:x8}", this.index, this.subindex, expitideddata);
 
                 if (completedcallback != null)
                     completedcallback(this);
@@ -262,8 +262,11 @@ namespace libCanOpenSimple
                 p.data[4 + x] = payload[x];
             }
 
-            if (dbglevel == debuglevel.DEBUG_ALL)
-                Console.WriteLine(String.Format("Sending a new SDO packet: {0}", p.ToString()));
+   //         if (dbglevel == debuglevel.DEBUG_ALL)
+			//{
+   //             Console.WriteLine(String.Format("Sending a new SDO packet: {0}", p.ToString()));
+				
+			//}
 
             if(can.isopen())
                 can.SendPacket(p);
@@ -287,8 +290,8 @@ namespace libCanOpenSimple
                 p.data[1 + x] = payload[x];
             }
 
-            if (dbglevel == debuglevel.DEBUG_ALL)
-                Console.WriteLine(String.Format("Sending a new segmented SDO packet: {0}", p.ToString()));
+            //if (dbglevel == debuglevel.DEBUG_ALL)
+            //    Console.WriteLine(String.Format("Sending a new segmented SDO packet: {0}", p.ToString()));
 
             can.SendPacket(p);
         }
@@ -333,7 +336,7 @@ namespace libCanOpenSimple
 
                 state = SDO_STATE.SDO_ERROR;
 
-                Console.WriteLine("SDO Error on {0:x4}/{1:x2} {2:x8}", this.index, this.subindex, expitideddata);
+                //Console.WriteLine("SDO Error on {0:x4}/{1:x2} {2:x8}", this.index, this.subindex, expitideddata);
 
                 if (completedcallback != null)
                     completedcallback(this);
@@ -420,7 +423,7 @@ namespace libCanOpenSimple
             {
                 UInt32 count = (UInt32)(cp.data[4] + (cp.data[5] << 8) + (cp.data[6] << 16) + (cp.data[7] << 24));
 
-                Console.WriteLine("RX Segmented transfer start length is {0}", count);
+                //Console.WriteLine("RX Segmented transfer start length is {0}", count);
                 expitideddata = count;
                 databuffer = new byte[expitideddata];
                 totaldata = 0;

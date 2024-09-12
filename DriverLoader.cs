@@ -36,9 +36,9 @@ namespace libCanOpenSimple
         }
 
         /// <summary>
-        /// Attempt to load the requested can festival driver and return a DriverInstance class
+        /// Attempt to load the requested can festival driver or SocketCan and return a DriverInstance class
         /// </summary>
-        /// <param name="fileName"> Name of the dynamic library to load, note do not append .dll or .so</param>
+        /// <param name="fileName"> Name of the dynamic library to load, note do not append .dll or .so. Use 'SocketCan' to load SocketCan driver</param>
         /// <returns></returns>
         public IDriverInstance loaddriver(string fileName)
         {
@@ -50,7 +50,7 @@ namespace libCanOpenSimple
                 DriverLoaderMono dl = new DriverLoaderMono();
                 return dl.loaddriver(fileName);
             }
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && fileName == "SocketCan")
 			{
 				return new DriverInstanceSocketCan();
 			}

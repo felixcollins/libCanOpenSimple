@@ -20,7 +20,7 @@ namespace libCanOpenSimple
 {
 	/// <summary>
 	/// C# representation of a CanPacket, containing the COB the length and the data. RTR is not supported
-	/// as its prettly much not used on CanOpen, but this could be added later if necessary
+	/// as it's pretty much not used on CanOpen, but this could be added later if necessary
 	/// </summary>
 	public class CanOpenPacket
     {
