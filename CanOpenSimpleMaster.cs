@@ -35,13 +35,6 @@ namespace libCanOpenSimple
         BUS_1Mbit,
     }
 
-    public enum debuglevel
-    {
-        DEBUG_ALL,
-        DEBUG_NONE
-    }
-
-
     /// <summary>
     /// A simple can open class providing callbacks for each of the message classes and allowing one to send messages to the bus
     /// Also supports some NMT helper functions and can act as a SDO Client
@@ -50,10 +43,6 @@ namespace libCanOpenSimple
     /// </summary>
     public class CanOpenSimpleMaster
     {
-
-      
-        public debuglevel dbglevel = debuglevel.DEBUG_NONE;
-       
         IDriverInstance driver;
 
         Dictionary<UInt16, NMTState> nmtstate = new Dictionary<ushort, NMTState>();
@@ -515,7 +504,7 @@ namespace libCanOpenSimple
         public SDO SDOwrite(byte node, UInt16 index, byte subindex, byte[] data, Action<SDO> completedcallback)
         {
 
-            SDO sdo = new SDO(this, node, index, subindex, SDO.direction.SDO_WRITE, completedcallback, data);
+            SDO sdo = new SDO(this, node, index, subindex, SDO.Direction.SDO_WRITE, completedcallback, data);
             lock(sdo_queue)
                 sdo_queue.Enqueue(sdo);
             return sdo;
@@ -531,7 +520,7 @@ namespace libCanOpenSimple
         /// <returns>SDO class that is used to perform the packet handshake, contains returned data and error/status codes</returns>
         public SDO SDOread(byte node, UInt16 index, byte subindex, Action<SDO> completedcallback)
         {
-            SDO sdo = new SDO(this, node, index, subindex, SDO.direction.SDO_READ, completedcallback, null);
+            SDO sdo = new SDO(this, node, index, subindex, SDO.Direction.SDO_READ, completedcallback, null);
             lock (sdo_queue)
                 sdo_queue.Enqueue(sdo);
             return sdo;

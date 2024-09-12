@@ -29,7 +29,7 @@ namespace libCanOpenSimple
         /// <summary>
         /// Direction of the SDO transfer
         /// </summary>
-        public enum direction
+        public enum Direction
         {
             SDO_READ = 0,
             SDO_WRITE = 1,
@@ -70,14 +70,13 @@ namespace libCanOpenSimple
         private Action<SDO> completedcallback;
       
       
-        private direction dir;
+        private Direction dir;
       
         private UInt32 totaldata;
         private CanOpenSimpleMaster can;
         private bool lasttoggle = false;
         private DateTime timeout;
         private ManualResetEvent finishedevent;
-        private debuglevel dbglevel;
 
 
         /// <summary>
@@ -90,7 +89,7 @@ namespace libCanOpenSimple
         /// <param name="dir">Direction of transfer</param>
         /// <param name="completedcallback">Optional, completed callback (or null if not required)</param>
         /// <param name="databuffer">A byte array of data to be transfered to or from if more than 4 bytes</param>
-        public SDO(CanOpenSimpleMaster can, byte node, UInt16 index, byte subindex, direction dir, Action<SDO> completedcallback, byte[] databuffer)
+        public SDO(CanOpenSimpleMaster can, byte node, UInt16 index, byte subindex, Direction dir, Action<SDO> completedcallback, byte[] databuffer)
         {
             this.can = can;
             this.index = index;
@@ -102,8 +101,6 @@ namespace libCanOpenSimple
 
             finishedevent = new ManualResetEvent(false);
             state = SDO_STATE.SDO_INIT;
-            dbglevel = can.dbglevel;
-
         }
 
         /// <summary>
@@ -180,14 +177,14 @@ namespace libCanOpenSimple
                 timeout = DateTime.Now + new TimeSpan(0, 0, 1);
                 state = SDO_STATE.SDO_SENT;
 
-                if (dir == direction.SDO_READ)
+                if (dir == Direction.SDO_READ)
                 {
                     byte cmd = 0x40;
                     byte[] payload = new byte[4];
                     sendpacket(cmd, payload);
                 }
 
-                if (dir == direction.SDO_WRITE)
+                if (dir == Direction.SDO_WRITE)
                 {
                     bool wpsent = false;
                     byte cmd = 0;
@@ -477,7 +474,7 @@ namespace libCanOpenSimple
 
             timeout = DateTime.Now + new TimeSpan(0, 0, 1);
 
-            if (dir == direction.SDO_READ)
+            if (dir == Direction.SDO_READ)
             {
                 byte cmd = 0x60;
                 if (toggle)

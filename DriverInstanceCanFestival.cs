@@ -21,7 +21,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-using static libCanOpenSimple.IDriverInstance;
+//using static libCanOpenSimple.IDriverInstance;
 
 namespace libCanOpenSimple
 {
@@ -36,7 +36,7 @@ namespace libCanOpenSimple
 		private bool threadrun = true;
 		System.Threading.Thread rxthread;
 
-		public event RxMessage rxmessage;
+		public event IDriverInstance.RxMessage rxmessage;
 
 		/// <summary>
 		/// This contains the bus name on which the can board is connected and the bit rate of the board
@@ -78,8 +78,6 @@ namespace libCanOpenSimple
 				}
 			}
 		}
-
-		UnmanagedStruct enumerationresult;
 
 		public delegate byte canReceive_T(IntPtr handle, IntPtr msg);
 		private canReceive_T canReceive;
