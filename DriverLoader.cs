@@ -16,6 +16,7 @@
 
 
 using System;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 
 namespace libCanOpenSimple
@@ -28,184 +29,185 @@ namespace libCanOpenSimple
 	/// by gordonmleigh
 	/// </summary>
 
-	public class DriverLoader
-    {
-        public static bool IsRunningOnMono()
-        {
-            return Type.GetType("Mono.Runtime") != null;
-        }
+	public static class DriverLoader
+	{
+		public static bool IsRunningOnMono()
+		{
+			return Type.GetType("Mono.Runtime") != null;
+		}
 
-        /// <summary>
-        /// Attempt to load the requested can festival driver or SocketCan and return a DriverInstance class
-        /// </summary>
-        /// <param name="fileName"> Name of the dynamic library to load, note do not append .dll or .so. Use 'SocketCan' to load SocketCan driver</param>
-        /// <returns></returns>
-        public IDriverInstance loaddriver(string fileName)
-        {
-          
+		/// <summary>
+		/// Attempt to load the requested can festival driver or SocketCan and return a DriverInstance class
+		/// </summary>
+		/// <param name="fileName"> Name of the dynamic library to load, note do not append .dll or .so. Use 'SocketCan' to load SocketCan driver</param>
+		/// <returns></returns>
+		public static IDriverInstance LoadDriver(string fileName)
+		{
 
-            if (IsRunningOnMono())
-            {
-                fileName += ".so";
-                DriverLoaderMono dl = new DriverLoaderMono();
-                return dl.loaddriver(fileName);
-            }
+
+			if (IsRunningOnMono())
+			{
+				fileName += ".so";
+				return DriverLoaderMono.LoadDriver(fileName);
+			}
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && fileName == "SocketCan")
 			{
 				return new DriverInstanceSocketCan();
 			}
 			else
-            {
-              
-                fileName += ".dll";
-                DriverLoaderWin dl = new DriverLoaderWin();
-                return dl.loaddriver(fileName);
-            }
+			{
 
-        }
-    }
+				fileName += ".dll";
+				return DriverLoaderWin.LoadDriver(fileName);
+			}
 
-    #region windows
+		}
+	}
 
-    /// <summary>
-    /// CanFestival driver loader for windows, this class will load kernel32 then attept to use LoadLibrary()
-    /// and GetProcAddress() to hook the can festival driver functions these are then exposed as delagates
-    /// for eash C# access
-    /// </summary>
+	#region windows
 
-    public class DriverLoaderWin
-    {
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern IntPtr LoadLibrary(string libname);
+	/// <summary>
+	/// CanFestival driver loader for windows, this class will load kernel32 then attept to use LoadLibrary()
+	/// and GetProcAddress() to hook the can festival driver functions these are then exposed as delagates
+	/// for eash C# access
+	/// </summary>
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-        private static extern bool FreeLibrary(IntPtr hModule);
+	public static class DriverLoaderWin
+	{
+		[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+		private static extern IntPtr LoadLibrary(string libname);
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Ansi)]
-        private static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
+		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+		private static extern bool FreeLibrary(IntPtr hModule);
 
-        private IntPtr Handle = IntPtr.Zero;
+		[DllImport("kernel32.dll", CharSet = CharSet.Ansi)]
+		private static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
 
-        DriverInstanceCanFestival driver;
+		private static IntPtr Handle = IntPtr.Zero;
 
-        /// <summary>
-        /// Clean up and free the library
-        /// </summary>
-        ~DriverLoaderWin()
-        {
-            if (Handle != IntPtr.Zero)
-            {
-                FreeLibrary(Handle);
-                Handle = IntPtr.Zero;
-            }
-        }
+		private static DriverInstanceCanFestival driver;
 
-        /// <summary>
-        /// Attempt to load the requested can festival driver and return a DriverInstance class
-        /// </summary>
-        /// <param name="fileName">Load can festival driver (Windows .Net runtime version) .dll must be appeneded in this case to fileName</param>
-        /// <returns></returns>
-        public DriverInstanceCanFestival loaddriver(string fileName)
-        {
+		/// <summary>
+		/// Attempt to load the requested can festival driver and return a DriverInstance class
+		/// Only one CanFestival driver can be loaded in the app. If you need to load multiple drivers
+		/// you will need to keep track of the handles and free them when done.
+		/// </summary>
+		/// <param name="fileName">Load can festival driver (Windows .Net runtime version) .dll must be appeneded in this case to fileName</param>
+		/// <returns></returns>
+		public static DriverInstanceCanFestival LoadDriver(string fileName)
+		{
+			// Load the library just once. Not bothering to free it. as it will get unloaded when the app closes.
+			// If you need to load and unload multiple times then you will need to add a FreeLibrary() call
+			if(Handle == IntPtr.Zero)
+			{
+				Handle = LoadLibrary(fileName);
+			}
 
-            IntPtr Handle = LoadLibrary(fileName);
+			if (Handle == IntPtr.Zero)
+			{
+				int errorCode = Marshal.GetLastWin32Error();
+				throw new Exception(string.Format("Failed to load library (ErrorCode: {0})", errorCode));
+			}
 
-            if (Handle == IntPtr.Zero)
-            {
-                int errorCode = Marshal.GetLastWin32Error();
-                throw new Exception(string.Format("Failed to load library (ErrorCode: {0})", errorCode));
-            }
+			IntPtr funcaddr;
 
-            IntPtr funcaddr;
+			funcaddr = GetProcAddress(Handle, "canReceive_driver");
+			DriverInstanceCanFestival.canReceive_T canReceive = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canReceive_T)) as DriverInstanceCanFestival.canReceive_T;
 
-            funcaddr = GetProcAddress(Handle, "canReceive_driver");
-            DriverInstanceCanFestival.canReceive_T canReceive = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canReceive_T)) as DriverInstanceCanFestival.canReceive_T;
+			funcaddr = GetProcAddress(Handle, "canSend_driver");
+			DriverInstanceCanFestival.canSend_T canSend = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canSend_T)) as DriverInstanceCanFestival.canSend_T; ;
 
-            funcaddr = GetProcAddress(Handle, "canSend_driver");
-            DriverInstanceCanFestival.canSend_T canSend = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canSend_T)) as DriverInstanceCanFestival.canSend_T; ;
+			funcaddr = GetProcAddress(Handle, "canOpen_driver");
+			DriverInstanceCanFestival.canOpen_T canOpen = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canOpen_T)) as DriverInstanceCanFestival.canOpen_T; ;
 
-            funcaddr = GetProcAddress(Handle, "canOpen_driver");
-            DriverInstanceCanFestival.canOpen_T canOpen = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canOpen_T)) as DriverInstanceCanFestival.canOpen_T; ;
+			funcaddr = GetProcAddress(Handle, "canClose_driver");
+			DriverInstanceCanFestival.canClose_T canClose = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canClose_T)) as DriverInstanceCanFestival.canClose_T; ;
 
-            funcaddr = GetProcAddress(Handle, "canClose_driver");
-            DriverInstanceCanFestival.canClose_T canClose = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canClose_T)) as DriverInstanceCanFestival.canClose_T; ;
+			funcaddr = GetProcAddress(Handle, "canChangeBaudRate_driver");
+			DriverInstanceCanFestival.canChangeBaudRate_T canChangeBaudRate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canChangeBaudRate_T)) as DriverInstanceCanFestival.canChangeBaudRate_T; ;
 
-            funcaddr = GetProcAddress(Handle, "canChangeBaudRate_driver");
-            DriverInstanceCanFestival.canChangeBaudRate_T canChangeBaudRate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canChangeBaudRate_T)) as DriverInstanceCanFestival.canChangeBaudRate_T; ;
+			funcaddr = GetProcAddress(Handle, "canEnumerate2_driver");
+			DriverInstanceCanFestival.canEnumerate_T canEnumerate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canEnumerate_T)) as DriverInstanceCanFestival.canEnumerate_T; ;
 
-            funcaddr = GetProcAddress(Handle, "canEnumerate2_driver");
-            DriverInstanceCanFestival.canEnumerate_T canEnumerate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canEnumerate_T)) as DriverInstanceCanFestival.canEnumerate_T; ;
+			driver = new DriverInstanceCanFestival(canReceive, canSend, canOpen, canClose, canChangeBaudRate, canEnumerate);
 
-            driver = new DriverInstanceCanFestival(canReceive, canSend, canOpen, canClose, canChangeBaudRate,canEnumerate);
+			return driver;
+		}
 
-            return driver;
-        }
+	}
+	#endregion
 
-    }
-    #endregion
+	#region mono
 
-    #region mono
+	/// <summary>
+	/// CanFestival driver loader for mono, this class will load libdl then attempt to use dlopen() and dlsym()
+	/// and GetProcAddress to hook the can festival driver functions these are then exposed as delagates
+	/// for each C# access
+	/// 
+	/// Only one CanFestival driver can be loaded in the app. If you need to load multiple drivers
+	/// you will need to keep track of the handles and free them when done.
+	/// </summary>
+	/// 
+	public static class DriverLoaderMono
+	{
 
-    /// <summary>
-    /// CanFestival driver loader for mono, this class will load libdl then attept to use dlopen() and dlsym()
-    /// and GetProcAddress to hook the can festival driver functions these are then exposed as delagates
-    /// for eash C# access
-    /// </summary>
-    /// 
-    public class DriverLoaderMono
-    {
+		[DllImport("libdl.so")]
+		static extern IntPtr dlopen(string filename, int flags);
 
-        [DllImport("libdl.so")]
-        protected static extern IntPtr dlopen(string filename, int flags);
+		[DllImport("libdl.so")]
+		static extern IntPtr dlsym(IntPtr handle, string symbol);
 
-        [DllImport("libdl.so")]
-        protected static extern IntPtr dlsym(IntPtr handle, string symbol);
+		private static IntPtr Handle = IntPtr.Zero;
 
-        DriverInstanceCanFestival driver;
+		private static DriverInstanceCanFestival driver;
 
-        const int RTLD_NOW = 2; // for dlopen's flags 
+		const int RTLD_NOW = 2; // for dlopen's flags 
 
-        /// <summary>
-        /// Attempt to load the requested can festival driver and return a DriverInstance class
-        /// </summary>
-        /// <param name="fileName">Load can festival driver (Mono runtime version) .so must be appeneded in this case to fileName</param>
-        /// <returns></returns>
-        public DriverInstanceCanFestival loaddriver(string fileName)
-        {
-            IntPtr Handle = dlopen(fileName, RTLD_NOW);
-            if (Handle == IntPtr.Zero)
-            {
-                int errorCode = Marshal.GetLastWin32Error();
-                throw new Exception(string.Format("Failed to load library (ErrorCode: {0})", errorCode));
-            }
+		/// <summary>
+		/// Attempt to load the requested can festival driver and return a DriverInstance class
+		/// </summary>
+		/// <param name="fileName">Load can festival driver (Mono runtime version) .so must be appeneded in this case to fileName</param>
+		/// <returns></returns>
+		public static DriverInstanceCanFestival LoadDriver(string fileName)
+		{
+			// Load the library just once. Not bothering to free it. as it will get unloaded when the app closes.
+			// If you need to load and unload multiple times then you will need to add a FreeLibrary() call
+			if (Handle == IntPtr.Zero)
+			{
+				Handle = dlopen(fileName, RTLD_NOW);
+			}
+			
+			if (Handle == IntPtr.Zero)
+			{
+				int errorCode = Marshal.GetLastWin32Error();
+				throw new Exception(string.Format("Failed to load library (ErrorCode: {0})", errorCode));
+			}
 
-            IntPtr funcaddr;
+			IntPtr funcaddr;
 
-            funcaddr = dlsym(Handle, "canReceive_driver");
-            DriverInstanceCanFestival.canReceive_T canReceive = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canReceive_T)) as DriverInstanceCanFestival.canReceive_T;
+			funcaddr = dlsym(Handle, "canReceive_driver");
+			DriverInstanceCanFestival.canReceive_T canReceive = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canReceive_T)) as DriverInstanceCanFestival.canReceive_T;
 
-            funcaddr = dlsym(Handle, "canSend_driver");
-            DriverInstanceCanFestival.canSend_T canSend = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canSend_T)) as DriverInstanceCanFestival.canSend_T; ;
+			funcaddr = dlsym(Handle, "canSend_driver");
+			DriverInstanceCanFestival.canSend_T canSend = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canSend_T)) as DriverInstanceCanFestival.canSend_T; ;
 
-            funcaddr = dlsym(Handle, "canOpen_driver");
-            DriverInstanceCanFestival.canOpen_T canOpen = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canOpen_T)) as DriverInstanceCanFestival.canOpen_T; ;
+			funcaddr = dlsym(Handle, "canOpen_driver");
+			DriverInstanceCanFestival.canOpen_T canOpen = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canOpen_T)) as DriverInstanceCanFestival.canOpen_T; ;
 
-            funcaddr = dlsym(Handle, "canClose_driver");
-            DriverInstanceCanFestival.canClose_T canClose = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canClose_T)) as DriverInstanceCanFestival.canClose_T; ;
+			funcaddr = dlsym(Handle, "canClose_driver");
+			DriverInstanceCanFestival.canClose_T canClose = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canClose_T)) as DriverInstanceCanFestival.canClose_T; ;
 
-            funcaddr = dlsym(Handle, "canChangeBaudRate_driver");
-            DriverInstanceCanFestival.canChangeBaudRate_T canChangeBaudRate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canChangeBaudRate_T)) as DriverInstanceCanFestival.canChangeBaudRate_T; ;
+			funcaddr = dlsym(Handle, "canChangeBaudRate_driver");
+			DriverInstanceCanFestival.canChangeBaudRate_T canChangeBaudRate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canChangeBaudRate_T)) as DriverInstanceCanFestival.canChangeBaudRate_T; ;
 
-            funcaddr = dlsym(Handle, "canEnumerate_driver");
-            DriverInstanceCanFestival.canEnumerate_T canEnumerate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canEnumerate_T)) as DriverInstanceCanFestival.canEnumerate_T; ;
+			funcaddr = dlsym(Handle, "canEnumerate_driver");
+			DriverInstanceCanFestival.canEnumerate_T canEnumerate = Marshal.GetDelegateForFunctionPointer(funcaddr, typeof(DriverInstanceCanFestival.canEnumerate_T)) as DriverInstanceCanFestival.canEnumerate_T; ;
 
-            driver = new DriverInstanceCanFestival(canReceive, canSend, canOpen, canClose, canChangeBaudRate,canEnumerate);
+			driver = new DriverInstanceCanFestival(canReceive, canSend, canOpen, canClose, canChangeBaudRate, canEnumerate);
 
-
-
-            return driver;
-        }
-    }
+			return driver;
+		}
+	}
 
 #endregion
 }

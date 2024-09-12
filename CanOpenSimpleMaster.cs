@@ -45,11 +45,9 @@ namespace libCanOpenSimple
     {
         IDriverInstance driver;
 
-        Dictionary<UInt16, NMTState> nmtstate = new Dictionary<ushort, NMTState>();
+		private readonly Dictionary<UInt16, NMTState> nmtstate = new Dictionary<ushort, NMTState>();
 
-        private Queue<SDO> sdo_queue = new Queue<SDO>();
-
-        DriverLoader loader = new DriverLoader();
+        private readonly Queue<SDO> sdo_queue = new Queue<SDO>();
 
         public bool echo = true;
 
@@ -74,8 +72,13 @@ namespace libCanOpenSimple
         /// <param name="drivername">Driver to use</param>
         public bool open(string comport, BUSSPEED speed, string drivername)
         {
+			if (driver != null)
+			{
+				throw new Exception("Driver already open - must be closed before reopening");
+			}
 
-            driver = loader.loaddriver(drivername);
+            driver = DriverLoader.LoadDriver(drivername);
+
             if (driver.open(string.Format("{0}", comport), speed) == false)
                 return false;
 
@@ -106,7 +109,7 @@ namespace libCanOpenSimple
             //on a hot plug event we have lost the handle and we will never close the port
             if (!drivers.ContainsKey(drivername))
             {
-                driver = loader.loaddriver(drivername);
+                driver = DriverLoader.LoadDriver(drivername);
                 drivers.Add(drivername, driver);
             }
 
@@ -166,7 +169,7 @@ namespace libCanOpenSimple
                 return;
 
             driver.close();
-
+			driver = null;
             if (connectionevent != null) connectionevent(this, new ConnectionChangedEventArgs(false));
         }
 
