@@ -11,6 +11,7 @@ using SocketCANSharp;
 using SocketCANSharp.Network;
 
 using static libCanOpenSimple.IDriverInstance;
+using static SocketCANSharp.LibcNativeMethods;
 
 namespace libCanOpenSimple
 {
@@ -48,9 +49,7 @@ namespace libCanOpenSimple
 
 		public void close()
 		{
-			socket.Close();
-			socket.Dispose();
-			socket = null;
+			threadrun = false;
 		}
 
 		public void enumerate()
@@ -97,17 +96,33 @@ namespace libCanOpenSimple
 		/// </summary>
 		private void rxthreadworker()
 		{
+			LibcNativeMethods.pollfd pollfd = new LibcNativeMethods.pollfd();
+			pollfd[] pollfdarray = [pollfd];
+			pollfd.fd = (int)socket.SafeHandle.DangerousGetHandle();
+			pollfd.events = (short)(LibcNativeMethods.POLLIN | LibcNativeMethods.POLLHUP | LibcNativeMethods.POLLERR);
+
 			while (threadrun)
 			{
-
-				Message rxmsg = canreceive();
-
-				if (rxmsg.len != 0)
+				var res = LibcNativeMethods.poll( pollfdarray, (ulong)pollfdarray.Length, 500);
+				if (res == -1)
 				{
-					if (rxmessage != null)
-						rxmessage(rxmsg);
+					throw new Exception("Error polling socket in CanOpen SocketCanDriver.");
+				}
+
+				if ((ushort)(pollfdarray[0].revents & LibcNativeMethods.POLLIN) == LibcNativeMethods.POLLIN)
+				{
+					Message rxmsg = canreceive();
+
+					if (rxmsg.len != 0)
+					{
+						if (rxmessage != null)
+							rxmessage(rxmsg);
+					}
 				}
 			}
+			socket.Close();
+			socket.Dispose();
+			socket = null;
 		}
 	}
 }
