@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using static libCanOpenSimple.SDO;
 
 namespace libCanOpenSimple
 {
@@ -180,8 +181,10 @@ namespace libCanOpenSimple
         Dictionary<UInt16, Action<byte[]>> PDOcallbacks = new Dictionary<ushort, Action<byte[]>>();
         public Dictionary<UInt16, SDO> SDOcallbacks = new Dictionary<ushort, SDO>();
         ConcurrentQueue<CanOpenPacket> packetqueue = new ConcurrentQueue<CanOpenPacket>();
+		List<SDO> activeSDO = new List<SDO>();
 
-        public delegate void ConnectionEvent(object sender, EventArgs e);
+
+		public delegate void ConnectionEvent(object sender, EventArgs e);
         public event ConnectionEvent connectionevent;
 
         public delegate void PacketEvent(CanOpenPacket p, DateTime dt);
@@ -236,7 +239,7 @@ namespace libCanOpenSimple
                 CanOpenPacket cp;
                 List<CanOpenPacket> pdos = new List<CanOpenPacket>();
 
-                while (threadrun && packetqueue.IsEmpty && pdos.Count==0 && sdo_queue.Count==0 && SDO.isEmpty())
+                while (threadrun && packetqueue.IsEmpty && pdos.Count==0 && sdo_queue.Count==0 && activeSDO.Count == 0)
                 {
                     System.Threading.Thread.Sleep(0);
                 }
@@ -268,7 +271,7 @@ namespace libCanOpenSimple
 
                             if (SDOcallbacks.ContainsKey(cp.cob))
                             {
-                                if (SDOcallbacks[cp.cob].SDOProcess(cp))
+                                if (SDOcallbacks[cp.cob].SDOProcess(cp, activeSDO))
                                 {
                                     SDOcallbacks.Remove(cp.cob);
                                 }
@@ -335,7 +338,7 @@ namespace libCanOpenSimple
                         pdoevent(pdos.ToArray(),DateTime.Now);
                 }
 
-                SDO.kick_SDO();
+                kick_SDO();
 
                 lock (sdo_queue)
                 {
@@ -347,26 +350,49 @@ namespace libCanOpenSimple
                         {
                             sdoobj = sdo_queue.Dequeue();
                             SDOcallbacks.Add((UInt16)(sdoobj.node + 0x580), sdoobj);
-                            sdoobj.sendSDO();
+                            activeSDO.Add(sdoobj);
                         }
                     }
                 }
             }
         }
 
+		/// <summary>
+		/// SDO pump, call this often
+		/// </summary>
+		private void kick_SDO()
+		{
+			List<SDO> tokill = new List<SDO>();
 
-        #region SDOHelpers
+			foreach (SDO s in activeSDO)
+			{
+				s.kick_SDOp();
+				if (s.state == SDO_STATE.SDO_FINISHED || s.state == SDO_STATE.SDO_ERROR)
+				{
+					tokill.Add(s);
+				}
+			}
 
-        /// <summary>
-        /// Write to a node via SDO
-        /// </summary>
-        /// <param name="node">Node ID</param>
-        /// <param name="index">Object Dictionary Index</param>
-        /// <param name="subindex">Object Dictionary sub index</param>
-        /// <param name="udata">UInt32 data to send</param>
-        /// <param name="completedcallback">Call back on finished/error event</param>
-        /// <returns>SDO class that is used to perform the packet handshake, contains error/status codes</returns>
-        public SDO SDOwrite(byte node, UInt16 index, byte subindex, UInt32 udata, Action<SDO> completedcallback)
+			foreach (SDO s in tokill)
+			{
+				activeSDO.Remove(s);
+				SDOcallbacks.Remove((UInt16)(s.node + 0x580));
+			}
+		}
+
+
+		#region SDOHelpers
+
+		/// <summary>
+		/// Write to a node via SDO
+		/// </summary>
+		/// <param name="node">Node ID</param>
+		/// <param name="index">Object Dictionary Index</param>
+		/// <param name="subindex">Object Dictionary sub index</param>
+		/// <param name="udata">UInt32 data to send</param>
+		/// <param name="completedcallback">Call back on finished/error event</param>
+		/// <returns>SDO class that is used to perform the packet handshake, contains error/status codes</returns>
+		public SDO SDOwrite(byte node, UInt16 index, byte subindex, UInt32 udata, Action<SDO> completedcallback)
         {
             byte[] bytes = BitConverter.GetBytes(udata);
             return SDOwrite(node, index, subindex, bytes, completedcallback);

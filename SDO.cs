@@ -47,10 +47,6 @@ namespace libCanOpenSimple
             SDO_ERROR,
         }
 
-        /// <summary>
-        /// Expitided data buffer, if transfer is 4 bytes or less, its here
-        /// </summary>
-
         public readonly byte node;
 
         //FIX me i was using all these from outside this class
@@ -65,8 +61,6 @@ namespace libCanOpenSimple
 
         public int returnlen = 0;
 
-        static List<SDO> activeSDO = new List<SDO>();
-
         private Action<SDO> completedcallback;
       
       
@@ -76,8 +70,7 @@ namespace libCanOpenSimple
         private CanOpenSimpleMaster can;
         private bool lasttoggle = false;
         private DateTime timeout;
-        private ManualResetEvent finishedevent;
-
+        
 
         /// <summary>
         /// Construct a new SDO object
@@ -99,65 +92,14 @@ namespace libCanOpenSimple
             this.completedcallback = completedcallback;
             this.databuffer = databuffer;
 
-            finishedevent = new ManualResetEvent(false);
             state = SDO_STATE.SDO_INIT;
         }
 
-        /// <summary>
-        /// Add this SDO object to the active list
-        /// </summary>
-        public void sendSDO()
-        {
-            lock (activeSDO)
-                activeSDO.Add(this);
-        }
-
-        public static bool isEmpty()
-        {
-            return activeSDO.Count == 0;
-        }
-
-        /// <summary>
-        /// Has the SDO transfer finished?
-        /// </summary>
-        /// <returns>True if the SDO has finished and fired its finished event</returns>
-        public bool WaitOne()
-        {
-            return finishedevent.WaitOne();
-        }
-
-
-        /// <summary>
-        /// SDO pump, call this often
-        /// </summary>
-        public static void kick_SDO()
-        {
-            List<SDO> tokill = new List<SDO>();
-
-            lock (activeSDO)
-            {
-                foreach (SDO s in activeSDO)
-                {
-                    s.kick_SDOp();
-                    if (s.state == SDO_STATE.SDO_FINISHED || s.state == SDO_STATE.SDO_ERROR)
-                    {
-                        tokill.Add(s);
-                    }
-                }
-            }
-
-            foreach (SDO s in tokill)
-            {
-                lock (activeSDO)
-                    activeSDO.Remove(s);
-                s.SDOFinish();
-            }
-        }
 
         /// <summary>
         /// State machine for a specific SDO instance
         /// </summary>
-        private void kick_SDOp()
+        public void kick_SDOp()
         {
 
             if (state != SDO_STATE.SDO_INIT && DateTime.Now > timeout)
@@ -294,20 +236,11 @@ namespace libCanOpenSimple
         }
 
         /// <summary>
-        /// Force finish the SDO and trigger its finished event
-        /// </summary>
-        public void SDOFinish()
-        {
-            can.SDOcallbacks.Remove((UInt16)(this.node + 0x580));
-            finishedevent.Set();
-        }
-
-        /// <summary>
         /// SDO Instance processor, process current SDO reply and decide what to do next
         /// </summary>
         /// <param name="cp">SDO Canpacket to process</param>
         /// <returns></returns>
-        public bool SDOProcess(CanOpenPacket cp)
+        public bool SDOProcess(CanOpenPacket cp, List<SDO> activeSDOs)
         {
 
             int SCS = cp.data[0] >> 5; //7-5
@@ -352,7 +285,7 @@ namespace libCanOpenSimple
                 int node = cp.cob - 0x580;
 
 
-                foreach (SDO sdo in activeSDO)
+                foreach (SDO sdo in activeSDOs)
                 {
                     if (sdo.node == node)
                     {
