@@ -74,7 +74,7 @@ namespace libCanOpenSimple
 
             driver = DriverLoader.LoadDriver(drivername);
 
-            if (driver.open(string.Format("{0}", comport), speed) == false)
+            if (driver.open(comport, speed) == false)
                 return false;
 
             driver.rxmessage += Driver_rxmessage;
@@ -93,8 +93,15 @@ namespace libCanOpenSimple
         public Dictionary<string, List<string>> ports = new Dictionary<string, List<string>>();
         public Dictionary<string, IDriverInstance> drivers = new Dictionary<string, IDriverInstance>();
 
+		/// <summary>
+		/// Will not work for SocketCan drivers
+		/// </summary>
         public void enumerate(string drivername)
         {
+			if (drivername == "SocketCan")
+			{
+				throw new Exception("SocketCan Driver does not support enumeration");
+			}
 
             if (!ports.ContainsKey(drivername))
                 ports.Add(drivername, new List<string>());
@@ -259,8 +266,6 @@ namespace libCanOpenSimple
                         if (cp.len != 8)
                             return;
 
-                        lock (sdo_queue)
-                        {
                             if (SDOcallbacks.ContainsKey(cp.cob))
                             {
                                 if (SDOcallbacks[cp.cob].SDOProcess(cp))
@@ -268,10 +273,10 @@ namespace libCanOpenSimple
                                     SDOcallbacks.Remove(cp.cob);
                                 }
                             }
+
                             if (sdoevent != null)
                                 sdoevent(cp, DateTime.Now);
                         }
-                    }
 
                     if (cp.cob >= 0x600 && cp.cob < 0x680)
                     {
