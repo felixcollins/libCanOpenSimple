@@ -45,21 +45,16 @@ namespace libCanOpenSimple
     {
         IDriverInstance driver;
 
-		private readonly Dictionary<UInt16, NMTState> nmtstate = new Dictionary<ushort, NMTState>();
+		private readonly ConcurrentDictionary<UInt16, NMTState> NMTStateStore = new ConcurrentDictionary<ushort, NMTState>();
+		private NMTState GetNMTStateForNode	(ushort node)
+		{
+			//Lazy create the NMT state for the node
+			return NMTStateStore.GetOrAdd(node, (node) => new NMTState());
+		}
 
         private readonly Queue<SDO> sdo_queue = new Queue<SDO>();
 
         public bool echo = true;
-
-        public CanOpenSimpleMaster()
-        {
-            //preallocate all NMT guards
-            for (byte x = 0; x < 0x80; x++)
-            {
-                NMTState nmt = new NMTState();
-                nmtstate[x] = nmt;
-            }
-        }
 
         #region driverinterface
 
@@ -288,9 +283,9 @@ namespace libCanOpenSimple
                     if (cp.cob > 0x700 && cp.cob <= 0x77f)
                     {
                         byte node = (byte)(cp.cob & 0x07F);
-
-                        nmtstate[node].changestate((NMTState.e_NMTState)cp.data[0]);
-                        nmtstate[node].lastping = DateTime.Now;
+						var nmt = GetNMTStateForNode(node);
+                        nmt.changestate((NMTState.e_NMTState)cp.data[0]);
+                        nmt.lastping = DateTime.Now;
 
                         if (nmtecevent != null)
                             nmtecevent(cp, DateTime.Now);
@@ -608,20 +603,33 @@ namespace libCanOpenSimple
             SendPacket(p);
         }
 
-        public void NMT_SetStateTransitionCallback(byte node, Action<NMTState.e_NMTState> callback)
+		/// <summary>
+		/// This is not a thread safe operation. It should be called before 
+		/// access to the node is established and then not changed. 
+		/// The worker thread checks if it is set before calling it - a race condition!
+		/// </summary>
+		public void NMT_SetStateTransitionCallback(byte node, Action<NMTState.e_NMTState> callback)
         {
-            nmtstate[node].NMT_boot = callback;
+			GetNMTStateForNode(node).NMT_boot = callback;
         }
 
-        public bool NMT_isNodeFound(byte node)
+		/// <summary>
+ 		/// Note that this is not thread safe and should be sued carefully
+		/// The worker thread may change the state of the node at any time
+		/// </summary>
+		public bool NMT_isNodeFound(byte node)
         {
-            return nmtstate[node].state != NMTState.e_NMTState.INVALID;
+            return GetNMTStateForNode(node).state != NMTState.e_NMTState.INVALID;
         }
 
 
-        public bool checkguard(int node, TimeSpan maxspan)
+		/// <summary>
+		/// Check whether it is time to send a guard message?
+		/// Note that this is not thread safe and should be called from the worker thread
+		/// </summary>
+        public bool checkguard(ushort node, TimeSpan maxspan)
         {
-            if (DateTime.Now - nmtstate[(ushort)node].lastping > maxspan)
+            if (DateTime.Now - GetNMTStateForNode(node).lastping > maxspan)
                 return false;
 
             return true;
