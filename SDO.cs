@@ -99,7 +99,7 @@ namespace libCanOpenSimple
         /// <summary>
         /// State machine for a specific SDO instance
         /// </summary>
-        public void kick_SDOp()
+        public void ProcessSDOStateMachine()
         {
 
             if (state != SDO_STATE.SDO_INIT && DateTime.Now > timeout)
@@ -236,11 +236,11 @@ namespace libCanOpenSimple
         }
 
         /// <summary>
-        /// SDO Instance processor, process current SDO reply and decide what to do next
+        /// SDO Instance processor, process current SDO reply packet
         /// </summary>
         /// <param name="cp">SDO Canpacket to process</param>
-        /// <returns></returns>
-        public bool SDOProcess(CanOpenPacket cp, List<SDO> activeSDOs)
+        /// <returns>true if the SDO is finished</returns>
+        public bool SDOProcessPacket(CanOpenPacket cp, List<SDO> activeSDOs)
         {
 
             int SCS = cp.data[0] >> 5; //7-5

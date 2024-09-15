@@ -53,7 +53,7 @@ namespace libCanOpenSimple
 			return NMTStateStore.GetOrAdd(node, (node) => new NMTState());
 		}
 
-        private readonly Queue<SDO> sdo_queue = new Queue<SDO>();
+        private readonly ConcurrentQueue<SDO> sdo_queue = new ConcurrentQueue<SDO>();
 
         public bool echo = true;
 
@@ -178,10 +178,10 @@ namespace libCanOpenSimple
 
         #endregion
 
-        Dictionary<UInt16, Action<byte[]>> PDOcallbacks = new Dictionary<ushort, Action<byte[]>>();
-        public Dictionary<UInt16, SDO> SDOcallbacks = new Dictionary<ushort, SDO>();
+        ConcurrentDictionary<ushort, Action<byte[]>> PDOcallbacks = new ConcurrentDictionary<ushort, Action<byte[]>>();
+		ConcurrentDictionary<ushort, SDO> SDOcallbacks = new ConcurrentDictionary<ushort, SDO>();
         ConcurrentQueue<CanOpenPacket> packetqueue = new ConcurrentQueue<CanOpenPacket>();
-		List<SDO> activeSDO = new List<SDO>();
+		List<SDO> activeSDOList = new List<SDO>();
 
 
 		public delegate void ConnectionEvent(object sender, EventArgs e);
@@ -239,7 +239,7 @@ namespace libCanOpenSimple
                 CanOpenPacket cp;
                 List<CanOpenPacket> pdos = new List<CanOpenPacket>();
 
-                while (threadrun && packetqueue.IsEmpty && pdos.Count==0 && sdo_queue.Count==0 && activeSDO.Count == 0)
+                while (threadrun && packetqueue.IsEmpty && pdos.Count==0 && sdo_queue.IsEmpty && activeSDOList.Count == 0)
                 {
                     System.Threading.Thread.Sleep(0);
                 }
@@ -256,9 +256,12 @@ namespace libCanOpenSimple
                     //PDO 0x180 -- 0x57F
                     if (cp.cob >= 0x180 && cp.cob <= 0x57F)
                     {
+						Action<byte[]> PDOcallback;
 
-                        if (PDOcallbacks.ContainsKey(cp.cob))
-                            PDOcallbacks[cp.cob](cp.data);
+                        if (PDOcallbacks.TryGetValue(cp.cob, out PDOcallback))
+						{
+							PDOcallback(cp.data);
+						}
 
                         pdos.Add(cp);
                     }
@@ -268,18 +271,20 @@ namespace libCanOpenSimple
                     {
                         if (cp.len != 8)
                             return;
+						
+						SDO toProcess;
 
-                            if (SDOcallbacks.ContainsKey(cp.cob))
+                        if (SDOcallbacks.TryGetValue(cp.cob, out toProcess))
+                        {
+                            if (toProcess.SDOProcessPacket(cp, activeSDOList))
                             {
-                                if (SDOcallbacks[cp.cob].SDOProcess(cp, activeSDO))
-                                {
-                                    SDOcallbacks.Remove(cp.cob);
-                                }
+                                SDOcallbacks.TryRemove(cp.cob, out _);
                             }
-
-                            if (sdoevent != null)
-                                sdoevent(cp, DateTime.Now);
                         }
+
+                        if (sdoevent != null)
+                            sdoevent(cp, DateTime.Now);
+                     }
 
                     if (cp.cob >= 0x600 && cp.cob < 0x680)
                     {
@@ -338,20 +343,29 @@ namespace libCanOpenSimple
                         pdoevent(pdos.ToArray(),DateTime.Now);
                 }
 
-                kick_SDO();
+                RunActiveSDOStateMachines();
 
-                lock (sdo_queue)
-                {
-                    if (sdo_queue.Count > 0)
+                SDO sdoobj;
+				if (sdo_queue.TryPeek(out sdoobj))
+				{
+                    if (!SDOcallbacks.ContainsKey((UInt16)(sdoobj.node + 0x580)))
                     {
-                        SDO sdoobj = sdo_queue.Peek();
+						SDO dequeuedsdoobj;
+                        if(sdo_queue.TryDequeue(out dequeuedsdoobj))
+						{
+							// A single thread is consuming the queue so this should never happen
+							// This should probably be an Assert rather than defensive programming
+							if (!Object.ReferenceEquals(dequeuedsdoobj, sdoobj))
+							{
+								throw new Exception("SDO queue has been consumed from some other thread!");
+							}
 
-                        if (!SDOcallbacks.ContainsKey((UInt16)(sdoobj.node + 0x580)))
-                        {
-                            sdoobj = sdo_queue.Dequeue();
-                            SDOcallbacks.Add((UInt16)(sdoobj.node + 0x580), sdoobj);
-                            activeSDO.Add(sdoobj);
-                        }
+							if (!SDOcallbacks.TryAdd((UInt16)(sdoobj.node + 0x580), sdoobj))
+							{
+								throw new Exception("SDO callback already exists for this node - some other thread added one?"); 
+							}
+							activeSDOList.Add(sdoobj);
+						}
                     }
                 }
             }
@@ -360,13 +374,13 @@ namespace libCanOpenSimple
 		/// <summary>
 		/// SDO pump, call this often
 		/// </summary>
-		private void kick_SDO()
+		private void RunActiveSDOStateMachines()
 		{
 			List<SDO> tokill = new List<SDO>();
 
-			foreach (SDO s in activeSDO)
+			foreach (SDO s in activeSDOList)
 			{
-				s.kick_SDOp();
+				s.ProcessSDOStateMachine();
 				if (s.state == SDO_STATE.SDO_FINISHED || s.state == SDO_STATE.SDO_ERROR)
 				{
 					tokill.Add(s);
@@ -375,8 +389,8 @@ namespace libCanOpenSimple
 
 			foreach (SDO s in tokill)
 			{
-				activeSDO.Remove(s);
-				SDOcallbacks.Remove((UInt16)(s.node + 0x580));
+				activeSDOList.Remove(s);
+				SDOcallbacks.Remove((UInt16)(s.node + 0x580), out _);
 			}
 		}
 
@@ -534,8 +548,7 @@ namespace libCanOpenSimple
         {
 
             SDO sdo = new SDO(this, node, index, subindex, SDO.Direction.SDO_WRITE, completedcallback, data);
-            lock(sdo_queue)
-                sdo_queue.Enqueue(sdo);
+            sdo_queue.Enqueue(sdo);
             return sdo;
         }
 
@@ -550,8 +563,7 @@ namespace libCanOpenSimple
         public SDO SDOread(byte node, UInt16 index, byte subindex, Action<SDO> completedcallback)
         {
             SDO sdo = new SDO(this, node, index, subindex, SDO.Direction.SDO_READ, completedcallback, null);
-            lock (sdo_queue)
-                sdo_queue.Enqueue(sdo);
+            sdo_queue.Enqueue(sdo);
             return sdo;
         }
 
@@ -569,8 +581,7 @@ namespace libCanOpenSimple
         /// </summary>
         public void flushSDOqueue()
         {
-            lock (sdo_queue)
-                sdo_queue.Clear();
+			sdo_queue.Clear();
         }
 
         #endregion
