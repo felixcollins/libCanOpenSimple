@@ -19,20 +19,25 @@ namespace libCanOpenSimple
 	{
 
 		private	RawCanSocket socket;
-		private bool threadrun = true;
+		private volatile bool threadrun = true;
 		private Thread rxthread;
 		public event RxMessage rxmessage;
 
 		public Message canreceive()
 		{
 			var msg = new Message();
-			var frm = new CanFrame();
-			int bytesRead = socket.Read(out frm);
-			msg.cob_id = (ushort)frm.CanId;
-			msg.data = BitConverter.ToUInt64(frm.Data);
-			msg.len = frm.Length;
-			if (bytesRead == -1)
-				throw new Exception("Reading from SocketCan failed");
+			var canFrame = new CanFrame();
+			int bytesRead = LibcNativeMethods.Read(socket.SafeHandle, ref canFrame, Marshal.SizeOf(typeof(CanFrame)));
+			if(bytesRead > 0)
+			{ 
+				msg.cob_id = (ushort)canFrame.CanId;
+				msg.data = BitConverter.ToUInt64(canFrame.Data);
+				msg.len = canFrame.Length;
+			}
+			else
+			{
+				msg.len = 0;
+			}
 			return msg;
 		}
 
@@ -84,7 +89,6 @@ namespace libCanOpenSimple
 				throw new Exception("Failed to bind to address.");
 			}
 
-
 			rxthread = new System.Threading.Thread(rxthreadworker);
 			rxthread.Start();
 
@@ -96,28 +100,22 @@ namespace libCanOpenSimple
 		/// </summary>
 		private void rxthreadworker()
 		{
-			LibcNativeMethods.pollfd pollfd = new LibcNativeMethods.pollfd();
-			pollfd[] pollfdarray = [pollfd];
-			pollfd.fd = (int)socket.SafeHandle.DangerousGetHandle();
-			pollfd.events = (short)(LibcNativeMethods.POLLIN | LibcNativeMethods.POLLHUP | LibcNativeMethods.POLLERR);
+			// Set the socket timeout to 500ms to keep the thread sensitive to the threadrun variable
+			var timeout = new Timeval(0, 500000);
+			if (-1 == LibcNativeMethods.SetSockOpt(socket.SafeHandle, SocketLevel.SOL_SOCKET, SocketLevelOptions.SO_RCVTIMEO, timeout, Marshal.SizeOf(timeout)))
+			{
+				throw new Exception("Failed to set socket timeout in DriverInstanceSocketCan");
+			}
 
 			while (threadrun)
 			{
-				var res = LibcNativeMethods.poll( pollfdarray, (ulong)pollfdarray.Length, 500);
-				if (res == -1)
-				{
-					throw new Exception("Error polling socket in CanOpen SocketCanDriver.");
-				}
+				Message rxmsg = canreceive();
+				//Console.WriteLine($"{DateTime.Now.Second}.{DateTime.Now.Millisecond} socketCAN Driver rxmsg {rxmsg.len}");
 
-				if ((ushort)(pollfdarray[0].revents & LibcNativeMethods.POLLIN) == LibcNativeMethods.POLLIN)
+				if (rxmsg.len != 0)
 				{
-					Message rxmsg = canreceive();
-
-					if (rxmsg.len != 0)
-					{
-						if (rxmessage != null)
-							rxmessage(rxmsg);
-					}
+					if (rxmessage != null)
+						rxmessage(rxmsg);
 				}
 			}
 			socket.Close();

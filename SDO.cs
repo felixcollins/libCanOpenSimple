@@ -99,7 +99,7 @@ namespace libCanOpenSimple
         /// <summary>
         /// State machine for a specific SDO instance
         /// </summary>
-        public void ProcessSDOStateMachine()
+        public void ProcessSDOStateMachineForSending()
         {
 
             if (state != SDO_STATE.SDO_INIT && DateTime.Now > timeout)
@@ -275,9 +275,8 @@ namespace libCanOpenSimple
             }
 
             //Write complete
-            if (SCS == 0x03)
+            else if (SCS == 0x03)
             {
-
 
                 UInt16 index = (UInt16)(cp.data[1] + (cp.data[2] << 8));
                 byte sub = cp.data[3];
@@ -311,7 +310,7 @@ namespace libCanOpenSimple
             }
 
             //Write segment complete
-            if (SCS == 0x01)
+            else if (SCS == 0x01)
             {
                 if (totaldata < expitideddata)
                 {
@@ -328,7 +327,7 @@ namespace libCanOpenSimple
             }
 
             //if expedited just handle the data
-            if (SCS == 0x02 && e == 1)
+            else if (SCS == 0x02 && e == 1)
             {
                 //Expidited and length are set so its a regular short transfer
 
@@ -349,7 +348,7 @@ namespace libCanOpenSimple
                 return true;
             }
 
-            if (SCS == 0x02)
+            else if (SCS == 0x02)
             {
                 UInt32 count = (UInt32)(cp.data[4] + (cp.data[5] << 8) + (cp.data[6] << 16) + (cp.data[7] << 24));
 
@@ -364,16 +363,15 @@ namespace libCanOpenSimple
 
             }
 
-            //segmented transfer
-            UInt32 scount = (UInt32)(7 - sn);
-
             //Segments toggle on
-            if (SCS == 0x00)
+            else if (SCS == 0x00)
             {
+				//segmented transfer
+				UInt32 scount = (UInt32)(7 - sn);
 
-               // Console.WriteLine("RX Segmented transfer update length is {0} -- {1}", scount, totaldata);
+				// Console.WriteLine("RX Segmented transfer update length is {0} -- {1}", scount, totaldata);
 
-                for (int x = 0; x < scount; x++)
+				for (int x = 0; x < scount; x++)
                 {
                     if ((totaldata + x) < databuffer.Length)
                         databuffer[totaldata + x] = cp.data[1 + x];
@@ -392,7 +390,6 @@ namespace libCanOpenSimple
                     if (completedcallback != null)
                         completedcallback(this);
                 }
-
             }
 
             return false;

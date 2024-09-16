@@ -50,7 +50,7 @@ namespace libCanOpenSimple
 		// In a high performance system with a heavily loaded CAN bus it may be beneficial
 		// to switch to ManualResetEventSlim, which would have a lower latency for going from
 		// idle to working.
-		private ManualResetEvent WorkAvailable = new ManualResetEvent(false);
+		private AutoResetEvent WorkAvailable = new AutoResetEvent(false);
 
 		private readonly ConcurrentDictionary<UInt16, NMTState> NMTStateStore = new ConcurrentDictionary<ushort, NMTState>();
 		private NMTState GetNMTStateForNode	(ushort node)
@@ -61,7 +61,6 @@ namespace libCanOpenSimple
 
         private readonly ConcurrentQueue<SDO> sdo_queue = new ConcurrentQueue<SDO>();
 
-        public bool echo = true;
 
         #region driverinterface
 
@@ -150,11 +149,6 @@ namespace libCanOpenSimple
             Message msg = p.ToMsg();
 
             driver.cansend(msg);
-
-            if (echo == true)
-            {
-                Driver_rxmessage(msg,bridge);
-            }
         }
 
         /// <summary>
@@ -256,8 +250,10 @@ namespace libCanOpenSimple
                 //}
 
 				// Stop here until there is work to do or we are shutting down
-				WorkAvailable.WaitOne();
-				WorkAvailable.Reset();
+				if(packetqueue.IsEmpty && sdo_queue.IsEmpty &&  activeSDOList.Count == 0 && threadrun)
+				{ 
+					WorkAvailable.WaitOne();
+				}
 
 				// If we are shutting down then we will not process any more packets we just stop the thread. 
 				// If the devices on the bus would work better with a clean shut down then more code would be needed to stop 
@@ -267,7 +263,7 @@ namespace libCanOpenSimple
 					break;
 				}
 
-				while (packetqueue.TryDequeue(out cp))
+				if (packetqueue.TryDequeue(out cp))
                 {
 
                     if (cp.bridge == false)
@@ -288,35 +284,32 @@ namespace libCanOpenSimple
 
                         pdos.Add(cp);
                     }
-
                     //SDO replies 0x601-0x67F
-                    if (cp.cob >= 0x580 && cp.cob < 0x600)
+                    else if (cp.cob >= 0x580 && cp.cob < 0x600)
                     {
-                        if (cp.len != 8)
+						if (cp.len != 8)
                             return;
 						
 						SDO toProcess;
 
-                        if (SDOcallbacks.TryGetValue(cp.cob, out toProcess))
+						if (SDOcallbacks.TryGetValue(cp.cob, out toProcess))
                         {
                             if (toProcess.SDOProcessPacket(cp, activeSDOList))
                             {
                                 SDOcallbacks.TryRemove(cp.cob, out _);
                             }
-                        }
+						}
 
-                        if (sdoevent != null)
+						if (sdoevent != null)
                             sdoevent(cp, DateTime.Now);
-                     }
-
-                    if (cp.cob >= 0x600 && cp.cob < 0x680)
+                    }
+					else if (cp.cob >= 0x600 && cp.cob < 0x680)
                     {
                         if (sdoevent != null)
                             sdoevent(cp,DateTime.Now);
                     }
-
                     //NMT
-                    if (cp.cob > 0x700 && cp.cob <= 0x77f)
+                    else if (cp.cob > 0x700 && cp.cob <= 0x77f)
                     {
                         byte node = (byte)(cp.cob & 0x07F);
 						var nmt = GetNMTStateForNode(node);
@@ -326,34 +319,30 @@ namespace libCanOpenSimple
                         if (nmtecevent != null)
                             nmtecevent(cp, DateTime.Now);
                     }
-
-                    if (cp.cob == 000)
+					else if (cp.cob == 000)
                     {
 
                         if (nmtevent != null)
                             nmtevent(cp, DateTime.Now);
                     }
-                    if (cp.cob == 0x80)
+                    else if (cp.cob == 0x80)
                     {
                         if (syncevent != null)
                             syncevent(cp, DateTime.Now);
                     }
-
-                    if (cp.cob > 0x080 && cp.cob <= 0xFF)
+                    else if (cp.cob > 0x080 && cp.cob <= 0xFF)
                     {
                         if (emcyevent != null)
                         {
                             emcyevent(cp, DateTime.Now);
                         }
                     }
-
-                    if (cp.cob == 0x100)
+                    else if (cp.cob == 0x100)
                     {
                         if (timeevent != null)
                             timeevent(cp, DateTime.Now);
                     }
-
-                    if (cp.cob > 0x7E4 && cp.cob <= 0x7E5)
+                    else if (cp.cob > 0x7E4 && cp.cob <= 0x7E5)
                     {
                         if (lssevent != null)
                             lssevent(cp, DateTime.Now);
@@ -366,9 +355,9 @@ namespace libCanOpenSimple
                         pdoevent(pdos.ToArray(),DateTime.Now);
                 }
 
-                RunActiveSDOStateMachines();
-
-                SDO sdoobj;
+				RunActiveSDOStateMachinesForSending();
+				
+				SDO sdoobj;
 				if (sdo_queue.TryPeek(out sdoobj))
 				{
                     if (!SDOcallbacks.ContainsKey((UInt16)(sdoobj.node + 0x580)))
@@ -391,19 +380,19 @@ namespace libCanOpenSimple
 						}
                     }
                 }
-            }
-        }
+			}
+		}
 
 		/// <summary>
 		/// SDO pump, call this often
 		/// </summary>
-		private void RunActiveSDOStateMachines()
+		private void RunActiveSDOStateMachinesForSending()
 		{
 			List<SDO> tokill = new List<SDO>();
 
 			foreach (SDO s in activeSDOList)
 			{
-				s.ProcessSDOStateMachine();
+				s.ProcessSDOStateMachineForSending();
 				if (s.state == SDO_STATE.SDO_FINISHED || s.state == SDO_STATE.SDO_ERROR)
 				{
 					tokill.Add(s);
