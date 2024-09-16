@@ -46,6 +46,12 @@ namespace libCanOpenSimple
     {
         IDriverInstance driver;
 
+		// This allows the worker thread to wait for work to do rather than busy waiting
+		// In a high performance system with a heavily loaded CAN bus it may be beneficial
+		// to switch to ManualResetEventSlim, which would have a lower latency for going from
+		// idle to working.
+		private ManualResetEvent WorkAvailable = new ManualResetEvent(false);
+
 		private readonly ConcurrentDictionary<UInt16, NMTState> NMTStateStore = new ConcurrentDictionary<ushort, NMTState>();
 		private NMTState GetNMTStateForNode	(ushort node)
 		{
@@ -158,6 +164,7 @@ namespace libCanOpenSimple
         private void Driver_rxmessage(Message msg,bool bridge=false)
         {
             packetqueue.Enqueue(new CanOpenPacket(msg,bridge));
+			WorkAvailable.Set();
         }
 
 
@@ -168,7 +175,10 @@ namespace libCanOpenSimple
         {
             threadrun = false;
 
-            if (driver == null)
+			// Run the worker thread so that it can see threadrun==false and exit;
+			WorkAvailable.Set();
+
+			if (driver == null)
                 return;
 
             driver.close();
@@ -214,7 +224,7 @@ namespace libCanOpenSimple
         public delegate void SYNCEvent(CanOpenPacket p, DateTime dt);
         public event SYNCEvent syncevent;
 
-        bool threadrun = true;
+        volatile bool threadrun = true;
 
         /// <summary>
         /// Register a parser handler for a PDO, if a PDO is recieved with a matching COB this function will be called
@@ -239,12 +249,25 @@ namespace libCanOpenSimple
                 CanOpenPacket cp;
                 List<CanOpenPacket> pdos = new List<CanOpenPacket>();
 
-                while (threadrun && packetqueue.IsEmpty && pdos.Count==0 && sdo_queue.IsEmpty && activeSDOList.Count == 0)
-                {
-                    System.Threading.Thread.Sleep(0);
-                }
+				// pdos.count can never be anything other than zero here
+                //while (threadrun && packetqueue.IsEmpty && pdos.Count==0 && sdo_queue.IsEmpty && activeSDOList.Count == 0)
+                //{
+                //    System.Threading.Thread.Sleep(0);
+                //}
 
-                while (packetqueue.TryDequeue(out cp))
+				// Stop here until there is work to do or we are shutting down
+				WorkAvailable.WaitOne();
+				WorkAvailable.Reset();
+
+				// If we are shutting down then we will not process any more packets we just stop the thread. 
+				// If the devices on the bus would work better with a clean shut down then more code would be needed to stop 
+				// accepting any more SDO or PDO requests and wait for the current ones to finish before shutting down.
+				if (!threadrun)
+				{
+					break;
+				}
+
+				while (packetqueue.TryDequeue(out cp))
                 {
 
                     if (cp.bridge == false)
@@ -546,9 +569,10 @@ namespace libCanOpenSimple
         /// <returns>SDO class that is used to perform the packet handshake, contains error/status codes</returns>
         public SDO SDOwrite(byte node, UInt16 index, byte subindex, byte[] data, Action<SDO> completedcallback)
         {
-
-            SDO sdo = new SDO(this, node, index, subindex, SDO.Direction.SDO_WRITE, completedcallback, data);
+			SDO sdo = new SDO(this, node, index, subindex, SDO.Direction.SDO_WRITE, completedcallback, data);
             sdo_queue.Enqueue(sdo);
+
+			WorkAvailable.Set();
             return sdo;
         }
 
@@ -562,9 +586,11 @@ namespace libCanOpenSimple
         /// <returns>SDO class that is used to perform the packet handshake, contains returned data and error/status codes</returns>
         public SDO SDOread(byte node, UInt16 index, byte subindex, Action<SDO> completedcallback)
         {
-            SDO sdo = new SDO(this, node, index, subindex, SDO.Direction.SDO_READ, completedcallback, null);
+			SDO sdo = new SDO(this, node, index, subindex, SDO.Direction.SDO_READ, completedcallback, null);
             sdo_queue.Enqueue(sdo);
-            return sdo;
+
+			WorkAvailable.Set();
+			return sdo;
         }
 
         /// <summary>
