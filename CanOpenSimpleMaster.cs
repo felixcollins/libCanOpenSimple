@@ -53,7 +53,7 @@ namespace libCanOpenSimple
 		private AutoResetEvent WorkAvailable = new AutoResetEvent(false);
 
 		private readonly ConcurrentDictionary<UInt16, NMTState> NMTStateStore = new ConcurrentDictionary<ushort, NMTState>();
-		private NMTState GetNMTStateForNode	(ushort node)
+		public NMTState GetNMTStateForNode	(ushort node)
 		{
 			//Lazy create the NMT state for the node
 			return NMTStateStore.GetOrAdd(node, (node) => new NMTState());
@@ -313,10 +313,20 @@ namespace libCanOpenSimple
                     {
                         byte node = (byte)(cp.cob & 0x07F);
 						var nmt = GetNMTStateForNode(node);
-                        nmt.changestate((NMTState.e_NMTState)cp.data[0]);
+						byte nmtmessage = cp.data[0];
+
+						// If we received the bootup message then we know we have gone to pre-operational
+						if (nmtmessage == 00)
+						{
+							nmt.changestate((NMTState.e_NMTState.PRE_OPERATIONAL));
+						}
+						else
+						{
+							nmt.changestate((NMTState.e_NMTState)nmtmessage);
+						}
                         nmt.lastping = DateTime.Now;
 
-                        if (nmtecevent != null)
+						if (nmtecevent != null)
                             nmtecevent(cp, DateTime.Now);
                     }
 					else if (cp.cob == 000)
@@ -393,7 +403,7 @@ namespace libCanOpenSimple
 			foreach (SDO s in activeSDOList)
 			{
 				s.ProcessSDOStateMachineForSending();
-				if (s.state == SDO_STATE.SDO_FINISHED || s.state == SDO_STATE.SDO_ERROR)
+				if (s.state == SDO_STATE.SDO_FINISHED || s.state == SDO_STATE.SDO_ERROR || s.state == SDO_STATE.SDO_TIMEOUT)
 				{
 					tokill.Add(s);
 				}

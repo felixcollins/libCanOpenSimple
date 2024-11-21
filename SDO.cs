@@ -45,6 +45,7 @@ namespace libCanOpenSimple
             SDO_HANDSHAKE,
             SDO_FINISHED,
             SDO_ERROR,
+			SDO_TIMEOUT
         }
 
         public readonly byte node;
@@ -104,7 +105,7 @@ namespace libCanOpenSimple
 
             if (state != SDO_STATE.SDO_INIT && DateTime.Now > timeout)
             {
-                state = SDO_STATE.SDO_ERROR;
+                state = SDO_STATE.SDO_TIMEOUT;
 
                 //Console.WriteLine("SDO Timeout Error on {0:x4}/{1:x2} {2:x8}", this.index, this.subindex, expitideddata);
 
@@ -116,7 +117,7 @@ namespace libCanOpenSimple
 
             if (state == SDO_STATE.SDO_INIT)
             {
-                timeout = DateTime.Now + new TimeSpan(0, 0, 1);
+                timeout = DateTime.Now + new TimeSpan(0, 0, 5);
                 state = SDO_STATE.SDO_SENT;
 
                 if (dir == Direction.SDO_READ)
@@ -402,7 +403,7 @@ namespace libCanOpenSimple
         private void requestNextSegment(bool toggle)
         {
 
-            timeout = DateTime.Now + new TimeSpan(0, 0, 1);
+            timeout = DateTime.Now + new TimeSpan(0, 0, 5);
 
             if (dir == Direction.SDO_READ)
             {
@@ -455,9 +456,9 @@ namespace libCanOpenSimple
 
 		public byte GetDataAsByte() => databuffer[0];
 		public sbyte GetDataAsChar() => (sbyte)databuffer[0];
-		public Int16 GetDataAsInt16() => BitConverter.ToInt16(databuffer, 0);
-		public UInt16 GetDataAsUInt16() => BitConverter.ToUInt16(databuffer, 0);
-		public Int32 GetDataAsInt32() => BitConverter.ToInt32(databuffer, 0);
-		public UInt32 GetDataAsUInt32() => BitConverter.ToUInt32(databuffer, 0);
+		public Int16 GetDataAsInt16() => databuffer == null ? (Int16)0 : BitConverter.ToInt16(databuffer, 0);
+		public UInt16 GetDataAsUInt16() => databuffer == null ? (UInt16)0 : BitConverter.ToUInt16(databuffer, 0);
+		public Int32 GetDataAsInt32() => databuffer == null ? (Int32)0 : BitConverter.ToInt32(databuffer, 0);
+		public UInt32 GetDataAsUInt32() => databuffer == null ? (UInt32)0 : BitConverter.ToUInt32(databuffer, 0);
 	}
 }
