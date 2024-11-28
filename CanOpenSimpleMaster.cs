@@ -575,15 +575,15 @@ namespace libCanOpenSimple
             return sdo;
         }
 
-        /// <summary>
-        /// Read from a remote node via SDO
-        /// </summary>
-        /// <param name="node">Node ID to read from</param>
-        /// <param name="index">Object Dictionary Index</param>
-        /// <param name="subindex">Object Dictionary sub index</param>
-        /// <param name="completedcallback">Call back on finished/error event</param>
-        /// <returns>SDO class that is used to perform the packet handshake, contains returned data and error/status codes</returns>
-        public SDO SDOread(byte node, UInt16 index, byte subindex, Action<SDO> completedcallback)
+		/// <summary>
+		/// Read from a remote node via SDO
+		/// </summary>
+		/// <param name="node">Node ID to read from</param>
+		/// <param name="index">Object Dictionary Index</param>
+		/// <param name="subindex">Object Dictionary sub index</param>
+		/// <param name="completedcallback">Call back on finished/error event</param>
+		/// <returns>SDO class that is used to perform the packet handshake, contains returned data and error/status codes</returns>
+		public SDO SDOread(byte node, UInt16 index, byte subindex, Action<SDO> completedcallback)
         {
 			SDO sdo = new SDO(this, node, index, subindex, SDO.Direction.SDO_READ, completedcallback, null);
             sdo_queue.Enqueue(sdo);

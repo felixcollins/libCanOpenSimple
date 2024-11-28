@@ -455,10 +455,33 @@ namespace libCanOpenSimple
         }
 
 		public byte GetDataAsByte() => databuffer[0];
-		public sbyte GetDataAsChar() => (sbyte)databuffer[0];
+		public sbyte GetDataAsSByte() => (sbyte)databuffer[0];
 		public Int16 GetDataAsInt16() => databuffer == null ? (Int16)0 : BitConverter.ToInt16(databuffer, 0);
 		public UInt16 GetDataAsUInt16() => databuffer == null ? (UInt16)0 : BitConverter.ToUInt16(databuffer, 0);
 		public Int32 GetDataAsInt32() => databuffer == null ? (Int32)0 : BitConverter.ToInt32(databuffer, 0);
 		public UInt32 GetDataAsUInt32() => databuffer == null ? (UInt32)0 : BitConverter.ToUInt32(databuffer, 0);
+		public T GetData<T>() where T : struct
+		{
+			var type = typeof(T);
+			if (type.IsEnum)
+			{
+				type = Enum.GetUnderlyingType(type);
+			}
+
+			if (type == typeof(byte))
+				return (T)(object)GetDataAsByte() ;
+			if (type == typeof(sbyte))
+				return (T)(object)GetDataAsSByte();
+			if (type == typeof(Int16))
+				return (T)(object)GetDataAsInt16();
+			if (type == typeof(UInt16))
+				return (T)(object)GetDataAsUInt16();
+			if (type == typeof(Int32))
+				return (T)(object)GetDataAsInt32();
+			if (type == typeof(UInt32))
+				return (T)(object)GetDataAsUInt32();
+			throw new ArgumentException("Unsupported type");
+		}
+
 	}
 }
