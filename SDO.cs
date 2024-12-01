@@ -460,6 +460,32 @@ namespace libCanOpenSimple
 		public UInt16 GetDataAsUInt16() => databuffer == null ? (UInt16)0 : BitConverter.ToUInt16(databuffer, 0);
 		public Int32 GetDataAsInt32() => databuffer == null ? (Int32)0 : BitConverter.ToInt32(databuffer, 0);
 		public UInt32 GetDataAsUInt32() => databuffer == null ? (UInt32)0 : BitConverter.ToUInt32(databuffer, 0);
+
+		public string GetDataAsString(Type typeOfData)
+		{
+			Type type = typeOfData;
+
+			if (typeOfData.IsEnum)
+			{
+				type = Enum.GetUnderlyingType(typeOfData);
+			}
+
+			if (type == typeof(byte))
+				return GetDataAsByte().ToString();
+			else if (type == typeof(sbyte))
+				return GetDataAsSByte().ToString();
+			else if (type == typeof(Int16))
+				return GetDataAsInt16().ToString();
+			else if (type == typeof(UInt16))
+				return GetDataAsUInt16().ToString();
+			else if (type == typeof(Int32))
+				return GetDataAsInt32().ToString();
+			else if (type == typeof(UInt32))
+				return GetDataAsUInt32().ToString();
+			throw new ArgumentException("Unsupported type");
+
+		}
+
 		public T GetData<T>() where T : struct
 		{
 			var type = typeof(T);
@@ -470,15 +496,15 @@ namespace libCanOpenSimple
 
 			if (type == typeof(byte))
 				return (T)(object)GetDataAsByte() ;
-			if (type == typeof(sbyte))
+			else if (type == typeof(sbyte))
 				return (T)(object)GetDataAsSByte();
-			if (type == typeof(Int16))
+			else if (type == typeof(Int16))
 				return (T)(object)GetDataAsInt16();
-			if (type == typeof(UInt16))
+			else if (type == typeof(UInt16))
 				return (T)(object)GetDataAsUInt16();
-			if (type == typeof(Int32))
+			else if (type == typeof(Int32))
 				return (T)(object)GetDataAsInt32();
-			if (type == typeof(UInt32))
+			else if (type == typeof(UInt32))
 				return (T)(object)GetDataAsUInt32();
 			throw new ArgumentException("Unsupported type");
 		}
