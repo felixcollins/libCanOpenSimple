@@ -44,7 +44,9 @@ namespace libCanOpenSimple
     /// </summary>
     public class CanOpenSimpleMaster
     {
-        IDriverInstance driver;
+		public const int DefaultTimeoutms = 1000;
+
+		IDriverInstance driver;
 
 		// This allows the worker thread to wait for work to do rather than busy waiting
 		// In a high performance system with a heavily loaded CAN bus it may be beneficial

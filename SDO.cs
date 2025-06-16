@@ -117,7 +117,7 @@ namespace libCanOpenSimple
 
             if (state == SDO_STATE.SDO_INIT)
             {
-                timeout = DateTime.Now + new TimeSpan(0, 0, 5);
+                timeout = DateTime.Now + TimeSpan.FromMilliseconds(CanOpenSimpleMaster.DefaultTimeoutms);
                 state = SDO_STATE.SDO_SENT;
 
                 if (dir == Direction.SDO_READ)
@@ -403,9 +403,9 @@ namespace libCanOpenSimple
         private void requestNextSegment(bool toggle)
         {
 
-            timeout = DateTime.Now + new TimeSpan(0, 0, 5);
+            timeout = DateTime.Now + TimeSpan.FromMilliseconds(CanOpenSimpleMaster.DefaultTimeoutms);
 
-            if (dir == Direction.SDO_READ)
+			if (dir == Direction.SDO_READ)
             {
                 byte cmd = 0x60;
                 if (toggle)
