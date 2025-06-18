@@ -54,7 +54,8 @@ namespace libCanOpenSimple
         //should see if that is really needed or if better accessors are required
         //may be readonly access etc.
         public byte[] databuffer = null;
-        public SDO_STATE state;
+		public byte[] replydatabuffer = null;
+		public SDO_STATE state;
         public UInt16 index;
         public byte subindex;
         public UInt32 expitideddata;
@@ -263,7 +264,7 @@ namespace libCanOpenSimple
             {
 
                 expitideddata = (UInt32)(cp.data[4] + (cp.data[5] << 8) + (cp.data[6] << 16) + (cp.data[7] << 24));
-                databuffer = BitConverter.GetBytes(expitideddata);
+                replydatabuffer = BitConverter.GetBytes(expitideddata);
 
                 state = SDO_STATE.SDO_ERROR;
 
@@ -460,6 +461,7 @@ namespace libCanOpenSimple
 		public UInt16 GetDataAsUInt16() => databuffer == null ? (UInt16)0 : BitConverter.ToUInt16(databuffer, 0);
 		public Int32 GetDataAsInt32() => databuffer == null ? (Int32)0 : BitConverter.ToInt32(databuffer, 0);
 		public UInt32 GetDataAsUInt32() => databuffer == null ? (UInt32)0 : BitConverter.ToUInt32(databuffer, 0);
+		public String GetDataAsString() => databuffer == null ? string.Empty : System.Text.Encoding.UTF8.GetString(databuffer);
 
 		public string GetDataAsString(Type typeOfData)
 		{
@@ -482,7 +484,9 @@ namespace libCanOpenSimple
 				return GetDataAsInt32().ToString();
 			else if (type == typeof(UInt32))
 				return GetDataAsUInt32().ToString();
-			throw new ArgumentException("Unsupported type");
+			else if (type == typeof(string))
+				return GetDataAsString();
+			throw new ArgumentException($"Unsupported type: {type.Name}");
 
 		}
 
