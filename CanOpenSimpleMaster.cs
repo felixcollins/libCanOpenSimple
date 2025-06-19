@@ -44,7 +44,7 @@ namespace libCanOpenSimple
     /// </summary>
     public class CanOpenSimpleMaster
     {
-		public const int DefaultTimeoutms = 1000;
+		public const int DefaultTimeoutms = 3000;
 
 		IDriverInstance driver;
 
@@ -642,7 +642,11 @@ namespace libCanOpenSimple
 
         public void NMT_ResetNode(byte nodeid = 0)
         {
-            CanOpenPacket p = new CanOpenPacket();
+			// Reset NMt status object for this node
+			// (nodes do not seem to broadcast an NMT state change when being reset)
+			GetNMTStateForNode(nodeid).changestate(NMTState.e_NMTState.INVALID);
+
+			CanOpenPacket p = new CanOpenPacket();
             p.cob = 000;
             p.len = 2;
             p.data = new byte[2];
@@ -662,16 +666,6 @@ namespace libCanOpenSimple
             p.data[1] = nodeid;
 
             SendPacket(p);
-        }
-
-		/// <summary>
-		/// This is not a thread safe operation. It should be called before 
-		/// access to the node is established and then not changed. 
-		/// The worker thread checks if it is set before calling it - a race condition!
-		/// </summary>
-		public void NMT_SetStateTransitionCallback(byte node, Action<NMTState.e_NMTState> callback)
-        {
-			GetNMTStateForNode(node).NMT_boot = callback;
         }
 
 		/// <summary>

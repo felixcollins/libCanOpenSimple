@@ -27,7 +27,6 @@ namespace libCanOpenSimple
             OPERATIONAL = 5,
             PRE_OPERATIONAL = 127,
             INVALID = 0xff,
-
         }
 
         public e_NMTState state;
@@ -49,14 +48,6 @@ namespace libCanOpenSimple
             laststate = state;
             state = newstate;
             lastping = DateTime.Now;
-
-            if (newstate == e_NMTState.BOOT)
-            {
-                if (state != laststate && NMT_boot != null)
-                {
-                    NMT_boot(state);
-                }
-            }
         }
     }
 }
