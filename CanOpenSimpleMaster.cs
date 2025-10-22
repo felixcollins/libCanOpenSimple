@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
 using static libCanOpenSimple.SDO;
 
 namespace libCanOpenSimple
